@@ -216,11 +216,11 @@ export const Login = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => fillQuickDemo('aarav_sharma', 'Password@123')}
+                onClick={() => fillQuickDemo('vibhu', 'Vibhu@127')}
                 className="p-2 rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-left transition text-xs"
               >
                 <div className="font-semibold text-sky-400 truncate">Central Authority</div>
-                <div className="text-[10px] text-slate-400 font-mono">aarav_sharma</div>
+                <div className="text-[10px] text-slate-400 font-mono">vibhu</div>
               </button>
               <button
                 type="button"
