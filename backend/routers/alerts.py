@@ -1,4 +1,3 @@
-from fastapi import APIRouter, Query
 from fastapi import APIRouter, Query, Depends
 from typing import Optional
 from backend.data.project_repository import project_repository
@@ -10,7 +9,6 @@ router = APIRouter(prefix="/alerts", tags=["Early Warning Alerts"])
 @router.get("")
 def list_alerts(
     severity: Optional[str] = Query(None, description="CRITICAL, HIGH, or MEDIUM"),
-    status: Optional[str] = Query(None, description="New, Under Review, Action Initiated, Resolved")
     status: Optional[str] = Query(None, description="New, Under Review, Action Initiated, Resolved"),
     state: Optional[str] = Query(None, description="State filter"),
     current_user: Optional[User] = Depends(get_optional_current_user)

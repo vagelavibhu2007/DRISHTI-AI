@@ -1,4 +1,3 @@
-from fastapi import APIRouter, Query
 from fastapi import APIRouter, Query, Depends
 from typing import Optional
 from backend.data.project_repository import project_repository
@@ -13,7 +12,6 @@ def get_high_risk_projects(
     ministry: Optional[str] = Query(None, description="Ministry filter"),
     sector: Optional[str] = Query(None, description="Sector filter"),
     state: Optional[str] = Query(None, description="State filter"),
-    limit: Optional[int] = Query(100, description="Max results")
     limit: Optional[int] = Query(100, description="Max results"),
     current_user: Optional[User] = Depends(get_optional_current_user)
 ):

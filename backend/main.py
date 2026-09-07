@@ -34,12 +34,9 @@ async def lifespan(app: FastAPI):
     logger.info(f"Shutting down {settings.APP_NAME}")
 
 app = FastAPI(
-    title=settings.APP_NAME,
-    description="Backend Machine Learning & Prediction API for DRISHTI AI Infrastructure Intelligence Platform",
     title="DRISHTI AI — Infrastructure Intelligence API",
     description="Production-grade Machine Learning & Predictive Risk Analytics API for Infrastructure Assets across India. Exposes risk forecasting, SHAP explainability, authority RBAC, and spatial intelligence.",
     version=settings.APP_VERSION,
-    lifespan=lifespan
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -65,7 +62,6 @@ app.include_router(explain.router, prefix=settings.API_PREFIX)
 app.include_router(model_info.router, prefix=settings.API_PREFIX)
 app.include_router(alerts.router, prefix=settings.API_PREFIX)
 
-@app.get("/")
 @app.get("/", tags=["System"])
 def root():
     return {
@@ -75,13 +71,11 @@ def root():
         "version": settings.APP_VERSION,
         "ml_mode": settings.ML_MODE,
         "cost_threshold": settings.COST_CLASSIFICATION_THRESHOLD,
-        "docs_url": "/docs"
         "docs_url": "/docs",
         "redoc_url": "/redoc",
         "openapi_url": "/openapi.json"
     }
 
-@app.get("/health")
 @app.get("/health", tags=["System"])
 def health_check():
     """
@@ -90,7 +84,6 @@ def health_check():
     """
     return {
         "status": "healthy",
-        "status": "ok",
         "service": "DRISHTI AI Backend",
         "version": settings.APP_VERSION,
         "models_loaded": {
@@ -100,5 +93,6 @@ def health_check():
             "time_regressor": model_loader.time_regressor is not None
         }
     }
+
 
 

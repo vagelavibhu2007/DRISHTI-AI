@@ -52,6 +52,8 @@ export const IndiaRiskMap = () => {
   const [selectedState, setSelectedState] = useState(() => {
     return isStateAuthority && assignedState ? assignedState : 'ALL';
   });
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [hoveredProject, setHoveredProject] = useState(null);
   const [selectedSector, setSelectedSector] = useState('ALL');
   const [selectedRisk, setSelectedRisk] = useState('ALL');
   const [activeHoverState, setActiveHoverState] = useState(null);
@@ -61,6 +63,8 @@ export const IndiaRiskMap = () => {
   useEffect(() => {
     if (isStateAuthority && assignedState) {
       setSelectedState(assignedState);
+      setSelectedProject(null);
+      setHoveredProject(null);
     }
   }, [isStateAuthority, assignedState]);
 
@@ -187,12 +191,39 @@ export const IndiaRiskMap = () => {
     });
   }, [filteredMapProjects]);
 
-  // Active state data for the side profile (independent of project markers)
+  // Active state data for the side profile (dynamically synced with hovered project, selected project, or state selection)
   const activeStateData = useMemo(() => {
     const defaultState = isStateAuthority && assignedState ? assignedState : 'Maharashtra';
-    const targetName = activeHoverState || (selectedState !== 'ALL' ? selectedState : defaultState);
+
+    let targetName = null;
+    if (activeHoverState) {
+      targetName = activeHoverState;
+    } else if (hoveredProject && hoveredProject.state) {
+      const pStates = extractProjectStates(hoveredProject.state);
+      const primaryState = pStates[0] || hoveredProject.state;
+      const matched = INDIA_STATE_PATHS.find(
+        (s) =>
+          s.name.toLowerCase() === primaryState.toLowerCase() ||
+          normalizeStateName(s.name).toLowerCase() === normalizeStateName(primaryState).toLowerCase()
+      );
+      targetName = matched ? matched.name : primaryState;
+    } else if (selectedProject && selectedProject.state) {
+      const pStates = extractProjectStates(selectedProject.state);
+      const primaryState = pStates[0] || selectedProject.state;
+      const matched = INDIA_STATE_PATHS.find(
+        (s) =>
+          s.name.toLowerCase() === primaryState.toLowerCase() ||
+          normalizeStateName(s.name).toLowerCase() === normalizeStateName(primaryState).toLowerCase()
+      );
+      targetName = matched ? matched.name : primaryState;
+    } else if (selectedState !== 'ALL') {
+      targetName = selectedState;
+    } else {
+      targetName = defaultState;
+    }
+
     return stateStats[targetName] || stateStats[defaultState] || Object.values(stateStats)[0];
-  }, [activeHoverState, selectedState, stateStats, isStateAuthority, assignedState]);
+  }, [activeHoverState, hoveredProject, selectedProject, selectedState, stateStats, isStateAuthority, assignedState]);
 
   // Choropleth style for state boundaries on light basemap
   const getStateStyle = (feature) => {
@@ -232,10 +263,10 @@ export const IndiaRiskMap = () => {
   };
 
   const handleResetMap = () => {
-    setSelectedState('ALL');
     setSelectedState(isStateAuthority && assignedState ? assignedState : 'ALL');
     setSelectedRisk('ALL');
     setSelectedSector('ALL');
+    setSelectedProject(null);
   };
 
   return (
@@ -257,7 +288,10 @@ export const IndiaRiskMap = () => {
           {/* State Filter */}
           <select
             value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
+            onChange={(e) => {
+              setSelectedState(e.target.value);
+              setSelectedProject(null);
+            }}
             className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-gov-700/20"
           >
             <option value="ALL">All States (National View)</option>
@@ -388,6 +422,7 @@ export const IndiaRiskMap = () => {
                       setActiveHoverState(null);
                     },
                     click: () => {
+                      setSelectedProject(null);
                       setSelectedState((prev) => (prev === stateName ? 'ALL' : stateName));
                     }
                   });
@@ -435,65 +470,122 @@ export const IndiaRiskMap = () => {
                       fillOpacity: 0.95
                     }}
                     eventHandlers={{
+                      mouseover: () => {
+                        setHoveredProject(p);
+                      },
+                      mouseout: () => {
+                        setHoveredProject(null);
+                      },
                       click: () => {
-                        setDrawerProjectId(p.projectId);
+                        setSelectedProject(p);
+                        setHoveredProject(null);
                       }
                     }}
                   >
                     {/* Hover Tooltip - strictly bound to THIS project's record */}
                     <Tooltip direction="top" offset={[0, -6]} opacity={1}>
-                      <div className="text-left font-sans text-xs min-w-[170px] p-0.5">
-                        <div className="font-mono font-bold text-slate-900">
-                          #{p.projectId}
+                      <div className="text-left font-sans text-xs min-w-[190px] p-1 text-slate-100">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-mono font-bold text-sky-400">#{p.projectId}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase">{p.sector}</span>
                         </div>
-                        <div className="text-xs font-semibold text-slate-800 line-clamp-1 mt-0.5">
+                        <div className="text-xs font-semibold text-white line-clamp-2 mt-0.5">
                           {p.projectName}
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-1 flex items-center justify-between gap-2 border-t border-slate-200 pt-1">
-                          <span>State: <strong className="text-slate-800">{p.state}</strong></span>
-                          <span>Risk: <strong className="text-slate-900 font-mono">{Number(p.overallRisk).toFixed(1)}</strong></span>
+                        <div className="text-[10px] text-slate-400 mt-1.5 flex items-center justify-between gap-2 border-t border-slate-700 pt-1">
+                          <span className="truncate max-w-[120px]" title={p.state}>
+                            State: <strong className="text-slate-200">{p.state}</strong>
+                          </span>
+                          <span className="flex-shrink-0">
+                            Risk: <strong className="text-white font-mono font-bold">{(Number(p.overallRisk) || 0).toFixed(1)}</strong>
+                          </span>
                         </div>
                       </div>
                     </Tooltip>
 
-                    {/* Interactive Click Popup - strictly bound to THIS project's record */}
+                    {/* Interactive Click Popup - High Contrast Dark Navy Presentation */}
                     <Popup className="drishti-map-popup">
-                      <div className="p-3.5 bg-white text-slate-900 rounded-xl border border-slate-200 min-w-[260px] space-y-2">
-                        <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-100">
-                          <span className="font-mono text-[11px] font-bold text-gov-700 bg-gov-50 px-1.5 py-0.5 rounded border border-gov-200">
+                      <div className="p-4 bg-slate-900 text-slate-100 rounded-xl border border-slate-700 min-w-[290px] max-w-[340px] space-y-3 font-sans shadow-2xl">
+                        <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-700/80">
+                          <span className="font-mono text-xs font-bold text-sky-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
                             #{p.projectId}
                           </span>
-                          <RiskBadge level={p.riskLevel} size="xs" showDot={false} />
+                          <RiskBadge level={p.riskLevel} score={Number(p.overallRisk) || undefined} size="xs" showDot={true} />
                         </div>
 
                         <div>
-                          <h5 className="font-bold text-xs text-slate-900 leading-snug">
+                          <h5 className="font-bold text-sm text-white leading-snug tracking-tight">
                             {p.projectName}
                           </h5>
-                          <div className="mt-1 space-y-0.5 text-[11px] text-slate-600">
-                            <div>State: <span className="font-bold text-slate-900">{p.state}</span></div>
-                            <div>Sector: <span className="font-medium text-slate-800">{p.sector}</span></div>
+                          <div className="mt-2 space-y-1.5 text-xs bg-slate-800/90 p-2.5 rounded-lg border border-slate-700/80">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-slate-400 font-medium">State:</span>
+                              <span className="font-bold text-white text-right">{p.state || 'N/A'}</span>
+                            </div>
+                            {p.ministry && (
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="text-slate-400 font-medium">Ministry:</span>
+                                <span className="font-medium text-slate-200 text-right truncate max-w-[190px]" title={p.ministry}>{p.ministry}</span>
+                              </div>
+                            )}
+                            {p.sector && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-slate-400 font-medium">Sector:</span>
+                                <span className="font-semibold text-sky-300">{p.sector}</span>
+                              </div>
+                            )}
+                            {p.district && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-slate-400 font-medium">District:</span>
+                                <span className="text-slate-300 text-right">{p.district}</span>
+                              </div>
+                            )}
+                            {p.status && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-slate-400 font-medium">Status:</span>
+                                <span className="text-emerald-400 font-medium">{p.status}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 pt-1 text-[10px] bg-slate-50 p-2 rounded-lg border border-slate-100">
-                          <div>
-                            <span className="text-slate-500 block">Cost Risk</span>
-                            <span className="font-bold text-red-600 font-mono text-xs">
-                              {Number(p.costRisk).toFixed(1)}%
+                        {/* Metrics Grid */}
+                        <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                          <div className="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                            <span className="text-slate-400 block font-medium">Cost Risk</span>
+                            <span className="font-mono font-bold text-red-400 text-xs">
+                              {(Number(p.costRisk) || 0).toFixed(1)}%
                             </span>
                           </div>
-                          <div>
-                            <span className="text-slate-500 block">Overall Risk</span>
-                            <span className="font-bold text-slate-900 font-mono text-xs">
-                              {Number(p.overallRisk).toFixed(1)}
+                          <div className="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                            <span className="text-slate-400 block font-medium">Time Risk</span>
+                            <span className="font-mono font-bold text-amber-400 text-xs">
+                              {(Number(p.timeRisk) || 0).toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                            <span className="text-slate-400 block font-medium">Progress</span>
+                            <span className="font-mono font-bold text-emerald-400 text-xs">
+                              {p.physicalProgress !== undefined && p.physicalProgress !== null ? `${p.physicalProgress}%` : 'N/A'}
                             </span>
                           </div>
                         </div>
+
+                        {(p.originalCost !== undefined && p.originalCost !== null) && (
+                          <div className="flex items-center justify-between text-[11px] text-slate-300 bg-slate-800/50 px-2.5 py-1.5 rounded-lg border border-slate-700/60">
+                            <span>Sanctioned: <strong className="text-white font-mono">₹{Number(p.originalCost).toLocaleString()} Cr</strong></span>
+                            {p.cumulativeExpenditure !== undefined && (
+                              <span>Spent: <strong className="text-sky-300 font-mono">₹{Number(p.cumulativeExpenditure).toLocaleString()} Cr</strong></span>
+                            )}
+                          </div>
+                        )}
 
                         <button
-                          onClick={() => setDrawerProjectId(p.projectId)}
-                          className="w-full mt-1.5 py-1.5 bg-gov-800 hover:bg-gov-900 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"
+                          onClick={() => {
+                            setSelectedProject(p);
+                            setDrawerProjectId(p.projectId);
+                          }}
+                          className="w-full py-2 bg-gov-700 hover:bg-gov-600 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                           View Project Intelligence
@@ -628,7 +720,10 @@ export const IndiaRiskMap = () => {
               </span>
               {selectedState !== (isStateAuthority && assignedState ? assignedState : 'ALL') && (
                 <button
-                  onClick={() => setSelectedState(isStateAuthority && assignedState ? assignedState : 'ALL')}
+                  onClick={() => {
+                    setSelectedState(isStateAuthority && assignedState ? assignedState : 'ALL');
+                    setSelectedProject(null);
+                  }}
                   className="text-xs text-gov-700 hover:text-gov-900 font-bold hover:underline"
                 >
                   Reset State Filter
@@ -645,7 +740,11 @@ export const IndiaRiskMap = () => {
                 filteredMapProjects.slice(0, 8).map((project) => (
                   <div
                     key={project.projectId}
+                    onMouseEnter={() => setHoveredProject(project)}
+                    onMouseLeave={() => setHoveredProject(null)}
                     onClick={() => {
+                      setSelectedProject(project);
+                      setHoveredProject(null);
                       setDrawerProjectId(project.projectId);
                     }}
                     className="p-3 bg-white rounded-lg border border-slate-200 hover:border-gov-700 hover:shadow-sm transition cursor-pointer flex items-center justify-between gap-3 group"

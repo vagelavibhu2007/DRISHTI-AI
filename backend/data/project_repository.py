@@ -342,16 +342,9 @@ class ProjectRepository:
                 return p
         return None
 
-    def get_kpi_summary(self):
-        total = len(self._projects_db)
-        critical = sum(1 for p in self._projects_db if p["riskLevel"] == "CRITICAL")
-        high = sum(1 for p in self._projects_db if p["riskLevel"] == "HIGH")
-        medium = sum(1 for p in self._projects_db if p["riskLevel"] == "MEDIUM")
-        low = sum(1 for p in self._projects_db if p["riskLevel"] == "LOW")
     def get_kpi_summary(self, state=None):
         projects = self._projects_db
         if state and state != "ALL":
-            projects = [p for p in self._projects_db if p["state"].lower() == state.lower()]
             projects = [p for p in self._projects_db if project_matches_state(p.get("state", ""), state)]
 
         total = len(projects)
@@ -371,7 +364,6 @@ class ProjectRepository:
                 "atRiskCapitalValueCr": 0.0,
                 "totalActiveAlerts": 0,
                 "resolvedAlertsMonth": 0,
-                "aiConfidenceIndex": 95.0
                 "aiConfidenceIndex": 95.0,
                 "state": state
             }
@@ -381,9 +373,6 @@ class ProjectRepository:
         medium = sum(1 for p in projects if p["riskLevel"] == "MEDIUM")
         low = sum(1 for p in projects if p["riskLevel"] == "LOW")
         
-        avg_risk = round(sum(p["overallRisk"] for p in self._projects_db) / (total or 1), 2)
-        avg_cost_risk = round(sum(p["costRisk"] for p in self._projects_db) / (total or 1), 2)
-        avg_time_risk = round(sum(p["timeRisk"] for p in self._projects_db) / (total or 1), 2)
         avg_risk = round(sum(p["overallRisk"] for p in projects) / total, 2)
         avg_cost_risk = round(sum(p["costRisk"] for p in projects) / total, 2)
         avg_time_risk = round(sum(p["timeRisk"] for p in projects) / total, 2)
@@ -405,7 +394,6 @@ class ProjectRepository:
                 "totalMonitoredValueCr": total_val,
                 "atRiskCapitalValueCr": at_risk_val,
                 "totalActiveAlerts": critical + (high // 2),
-                "resolvedAlertsMonth": medium // 2,
                 "resolvedAlertsMonth": max(1, medium // 2),
                 "aiConfidenceIndex": 94.6,
                 "state": state
@@ -422,13 +410,11 @@ class ProjectRepository:
             "averageRiskScore": avg_risk,
             "averageCostRisk": avg_cost_risk,
             "averageTimeRisk": avg_time_risk,
-            "lastUpdated": "04 September 2026",
             "lastUpdated": "05 September 2026",
             "totalMonitoredValueCr": 2486750.0,
             "atRiskCapitalValueCr": 1142800.0,
             "totalActiveAlerts": 84,
             "resolvedAlertsMonth": 28,
-            "aiConfidenceIndex": 94.6
             "aiConfidenceIndex": 94.6,
             "state": None
         }
