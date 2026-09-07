@@ -484,21 +484,39 @@ export const IndiaRiskMap = () => {
                   >
                     {/* Hover Tooltip - strictly bound to THIS project's record */}
                     <Tooltip direction="top" offset={[0, -6]} opacity={1}>
-                      <div className="text-left font-sans text-xs min-w-[190px] p-1 text-slate-100">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-mono font-bold text-sky-400">#{p.projectId}</span>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">{p.sector}</span>
+                      <div className="text-left font-sans text-xs min-w-[220px] max-w-[280px] p-2 text-slate-100 bg-slate-900/95 rounded-lg border border-slate-700 shadow-xl space-y-1.5">
+                        <div className="flex items-center justify-between gap-1 pb-1 border-b border-slate-700/80">
+                          <span className="font-mono font-bold text-sky-400 text-[11px]">#{p.projectId}</span>
+                          <span className="text-[10px] font-bold text-slate-300 uppercase bg-slate-800 px-1.5 py-0.5 rounded">{p.sector || 'Infrastructure'}</span>
                         </div>
-                        <div className="text-xs font-semibold text-white line-clamp-2 mt-0.5">
+                        <div className="text-xs font-bold text-white leading-snug">
                           {p.projectName}
                         </div>
-                        <div className="text-[10px] text-slate-400 mt-1.5 flex items-center justify-between gap-2 border-t border-slate-700 pt-1">
-                          <span className="truncate max-w-[120px]" title={p.state}>
-                            State: <strong className="text-slate-200">{p.state}</strong>
+                        <div className="text-[11px] space-y-0.5 text-slate-300">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400">State:</span>
+                            <span className="font-semibold text-white truncate max-w-[140px]" title={p.state}>{p.state}</span>
+                          </div>
+                          {p.district && (
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className="text-slate-400">District:</span>
+                              <span className="text-slate-200">{p.district}</span>
+                            </div>
+                          )}
+                          {p.status && (
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className="text-slate-400">Status:</span>
+                              <span className="text-emerald-400 font-medium">{p.status}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-700/80 text-[10px]">
+                          <span className="text-slate-400">
+                            Risk: <strong className="text-white font-mono font-bold">{(Number(p.overallRisk) || 0).toFixed(1)}</strong> ({p.riskLevel})
                           </span>
-                          <span className="flex-shrink-0">
-                            Risk: <strong className="text-white font-mono font-bold">{(Number(p.overallRisk) || 0).toFixed(1)}</strong>
-                          </span>
+                          {p.physicalProgress !== undefined && p.physicalProgress !== null && (
+                            <span className="text-emerald-400 font-mono font-bold">{p.physicalProgress}% Prog</span>
+                          )}
                         </div>
                       </div>
                     </Tooltip>
