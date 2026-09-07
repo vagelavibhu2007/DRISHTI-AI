@@ -34,7 +34,13 @@ class Settings(BaseSettings):
     CATEGORICAL_FEATURES: list[str] = ["Ministry", "Sector", "State"]
     ALL_FEATURES: list[str] = NUMERIC_FEATURES + CATEGORICAL_FEATURES
 
-    CORS_ORIGINS: list[str] = ["*"]
+    CORS_ORIGINS: list[str] = [
+        origin.strip() for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000"
+        ).split(",") if origin.strip()
+    ]
+    CORS_ORIGIN_REGEX: str = os.getenv("CORS_ORIGIN_REGEX", r"^https:\/\/.*\.vercel\.app$|^https:\/\/.*\.onrender\.com$|^https:\/\/.*\.railway\.app$")
 
     # Authentication & Security Settings
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./backend/data/drishti_auth.db")

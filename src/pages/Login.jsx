@@ -119,15 +119,24 @@ export const Login = () => {
           </div>
 
           {/* Error Banner */}
-          {errorMessage && (
-            <div className="mb-5 p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-start gap-2.5 animate-in fade-in duration-200">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-semibold text-red-200">Authentication Failed</p>
-                <p className="text-red-300/90 mt-0.5">{errorMessage}</p>
+          {errorMessage && (() => {
+            const lowerErr = errorMessage.toLowerCase();
+            const isNetwork = lowerErr.includes('unreachable') || lowerErr.includes('network error') || lowerErr.includes('connection') || lowerErr.includes('failed to fetch') || lowerErr.includes('cors');
+            const isServer = lowerErr.includes('internal server') || lowerErr.includes('server error');
+            const title = isNetwork ? 'Backend Service Unavailable' : isServer ? 'Server Error' : 'Authentication Failed';
+
+            return (
+              <div className={`mb-5 p-3.5 rounded-xl border text-xs flex items-start gap-2.5 animate-in fade-in duration-200 ${
+                isNetwork ? 'bg-amber-500/15 border-amber-500/30 text-amber-200' : 'bg-red-500/15 border-red-500/30 text-red-300'
+              }`}>
+                <AlertCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isNetwork ? 'text-amber-400' : 'text-red-400'}`} />
+                <div className="flex-1">
+                  <p className={`font-semibold ${isNetwork ? 'text-amber-200' : 'text-red-200'}`}>{title}</p>
+                  <p className={`${isNetwork ? 'text-amber-300/90' : 'text-red-300/90'} mt-0.5`}>{errorMessage}</p>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">

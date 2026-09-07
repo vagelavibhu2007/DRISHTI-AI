@@ -47,6 +47,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -67,7 +68,8 @@ def root():
     return {
         "platform": "DRISHTI AI",
         "tagline": "Don't Just Monitor Projects — Predict Their Risks.",
-        "status": "Online",
+        "status": "ok",
+        "service": "DRISHTI AI Backend",
         "version": settings.APP_VERSION,
         "ml_mode": settings.ML_MODE,
         "cost_threshold": settings.COST_CLASSIFICATION_THRESHOLD,
@@ -77,15 +79,17 @@ def root():
     }
 
 @app.get("/health", tags=["System"])
+@app.get("/api/health", tags=["System"])
 def health_check():
     """
-    GET /health
-    Basic service health check endpoint.
+    GET /health & GET /api/health
+    Production health check endpoint reporting service status and loaded ML models.
     """
     return {
-        "status": "healthy",
+        "status": "ok",
         "service": "DRISHTI AI Backend",
         "version": settings.APP_VERSION,
+        "ml_mode": settings.ML_MODE,
         "models_loaded": {
             "cost_classifier": model_loader.is_cost_classifier_ready,
             "time_classifier": model_loader.is_time_classifier_ready,

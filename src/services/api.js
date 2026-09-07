@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { MOCK_PROJECTS, DASHBOARD_STATS, EARLY_WARNING_ALERTS } from '../data/mockData';
 
-const RAW_API_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '';
+const RAW_API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '';
 const API_BASE_URL = RAW_API_URL
   ? (RAW_API_URL.endsWith('/api') ? RAW_API_URL : `${RAW_API_URL.replace(/\/+$/, '')}/api`)
   : (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
