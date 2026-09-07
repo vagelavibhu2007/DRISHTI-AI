@@ -54,7 +54,7 @@ export const Login = () => {
         setErrorMessage(result.error || 'Invalid credentials. Please verify and try again.');
       }
     } catch (err) {
-      setErrorMessage('Network or server error during sign-in.');
+      setErrorMessage(err.message || 'Network or server error during sign-in.');
     } finally {
       setIsSubmitting(false);
     }

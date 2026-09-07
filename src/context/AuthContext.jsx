@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true, user: userData };
     } catch (err) {
-      const errorDetail = err.response?.data?.detail || 'Authentication failed. Please check your credentials.';
+      const errorDetail = err.response?.data?.detail || err.message || 'Authentication failed. Please check your credentials.';
       setAuthError(errorDetail);
       return { success: false, error: errorDetail };
     }

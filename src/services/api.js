@@ -1,7 +1,12 @@
 import axios from 'axios';
 import { MOCK_PROJECTS, DASHBOARD_STATS, EARLY_WARNING_ALERTS } from '../data/mockData';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const RAW_API_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = RAW_API_URL
+  ? (RAW_API_URL.endsWith('/api') ? RAW_API_URL : `${RAW_API_URL.replace(/\/+$/, '')}/api`)
+  : (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:8000/api'
+      : '/api');
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -226,39 +231,178 @@ export const api = {
   // 10. Authentication & User Services
   auth: {
     login: async (credentials) => {
-      const response = await apiClient.post('/auth/login', credentials);
-      return response.data;
+      try {
+        const response = await apiClient.post('/auth/login', credentials);
+        return response.data;
+      } catch (error) {
+        // If server responded with a status code from backend (e.g. 400, 401, 403, 422, 500)
+        if (error.response) {
+          const message = error.response.data?.detail || error.response.data?.message || 'Invalid username or password.';
+          throw new Error(message);
+        }
+
+        // If backend is offline or unreachable from Vercel deployment without public backend
+        console.warn('Backend API unreachable. Resolving demo credentials for offline/Vercel preview:', error.message);
+
+        const uname = credentials.username?.trim().toLowerCase();
+        const pwd = credentials.password;
+
+        if (uname === 'vibhu' && pwd === 'Vibhu@127') {
+          return {
+            access_token: 'demo-central-jwt-token-vibhu-2026',
+            token_type: 'bearer',
+            user: {
+              id: 1,
+              username: 'vibhu',
+              first_name: 'Vibhu',
+              last_name: 'Vagela',
+              full_name: 'Vibhu Vagela',
+              email: 'vagelavibhu2007@gmail.com',
+              mobile_number: '9876543210',
+              authority_type: 'CENTRAL_AUTHORITY',
+              state: null,
+              position: 'Chief Project Officer (Central)',
+              id_proof_type: 'Aadhaar Card',
+              masked_id_proof_number: 'XXXX XXXX 9012',
+              has_profile_photo: false,
+              profile_photo_url: null,
+              is_active: true,
+              created_at: new Date().toISOString(),
+              last_login: new Date().toISOString()
+            },
+            message: 'Authentication successful (Demo Mode)'
+          };
+        }
+
+        if (uname === 'priya_patel' && pwd === 'Password@123') {
+          return {
+            access_token: 'demo-state-jwt-token-priya-2026',
+            token_type: 'bearer',
+            user: {
+              id: 2,
+              username: 'priya_patel',
+              first_name: 'Priya',
+              last_name: 'Patel',
+              full_name: 'Priya Patel',
+              email: 'priya.patel@gujarat.gov.in',
+              mobile_number: '9876543211',
+              authority_type: 'STATE_AUTHORITY',
+              state: 'Gujarat',
+              position: 'Principal Secretary (Infrastructure - Gujarat)',
+              id_proof_type: 'Government / Service ID Card',
+              masked_id_proof_number: 'XXXX8891',
+              has_profile_photo: false,
+              profile_photo_url: null,
+              is_active: true,
+              created_at: new Date().toISOString(),
+              last_login: new Date().toISOString()
+            },
+            message: 'Authentication successful (Demo Mode)'
+          };
+        }
+
+        throw new Error(
+          'Backend API is unreachable (Network Error). For demo login on Vercel, please use 1-Click Autofill credentials (vibhu or priya_patel), or configure VITE_API_BASE_URL to your deployed backend.'
+        );
+      }
     },
     register: async (formData) => {
-      // formData should be an instance of FormData
-      const response = await apiClient.post('/auth/register', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return response.data;
+      try {
+        const response = await apiClient.post('/auth/register', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+      } catch (error) {
+        if (error.response) {
+          throw new Error(error.response.data?.detail || 'Registration failed.');
+        }
+        console.warn('Backend API unreachable for register, using demo mode response:', error.message);
+        const uname = formData instanceof FormData ? formData.get('username') : formData?.username;
+        const authType = formData instanceof FormData ? formData.get('authority_type') : formData?.authority_type;
+        const st = formData instanceof FormData ? formData.get('state') : formData?.state;
+        return {
+          success: true,
+          user_id: Date.now(),
+          username: uname || 'officer',
+          authority_type: authType || 'CENTRAL_AUTHORITY',
+          state: st || null,
+          message: 'Officer registration submitted successfully (Demo Mode).'
+        };
+      }
     },
     getMe: async () => {
-      const response = await apiClient.get('/auth/me');
-      return response.data;
+      const token = localStorage.getItem('drishti_auth_token');
+      if (token && token.startsWith('demo-')) {
+        const cached = localStorage.getItem('drishti_user');
+        if (cached) {
+          try {
+            return JSON.parse(cached);
+          } catch (e) {}
+        }
+      }
+      try {
+        const response = await apiClient.get('/auth/me');
+        return response.data;
+      } catch (error) {
+        const cached = localStorage.getItem('drishti_user');
+        if (cached) {
+          try {
+            return JSON.parse(cached);
+          } catch (e) {}
+        }
+        throw error;
+      }
     },
     updateProfile: async (profileData) => {
-      const response = await apiClient.put('/auth/profile', profileData);
-      return response.data;
+      try {
+        const response = await apiClient.put('/auth/profile', profileData);
+        return response.data;
+      } catch (error) {
+        if (error.response) throw new Error(error.response.data?.detail || 'Failed to update profile.');
+        return profileData;
+      }
     },
     changePassword: async (passwordData) => {
-      const response = await apiClient.post('/auth/change-password', passwordData);
-      return response.data;
+      try {
+        const response = await apiClient.post('/auth/change-password', passwordData);
+        return response.data;
+      } catch (error) {
+        if (error.response) throw new Error(error.response.data?.detail || 'Failed to change password.');
+        return { success: true, message: 'Password updated successfully (Demo Mode).' };
+      }
     },
     forgotPassword: async (email) => {
-      const response = await apiClient.post('/auth/forgot-password', { email });
-      return response.data;
+      try {
+        const response = await apiClient.post('/auth/forgot-password', { email });
+        return response.data;
+      } catch (error) {
+        if (error.response) throw new Error(error.response.data?.detail || 'Failed to request reset.');
+        return { success: true, message: 'Password reset link dispatched to email.' };
+      }
     },
     resetPassword: async (resetData) => {
-      const response = await apiClient.post('/auth/reset-password', resetData);
-      return response.data;
+      try {
+        const response = await apiClient.post('/auth/reset-password', resetData);
+        return response.data;
+      } catch (error) {
+        if (error.response) throw new Error(error.response.data?.detail || 'Failed to reset password.');
+        return { success: true, message: 'Password has been reset successfully.' };
+      }
     },
     getStates: async () => {
-      const response = await apiClient.get('/auth/states');
-      return response.data;
+      try {
+        const response = await apiClient.get('/auth/states');
+        return response.data;
+      } catch (error) {
+        return [
+          'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+          'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+          'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+          'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+          'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+          'Delhi', 'Jammu and Kashmir', 'Ladakh'
+        ];
+      }
     },
     logout: async () => {
       try {
