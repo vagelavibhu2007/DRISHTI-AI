@@ -156,6 +156,45 @@ def admin_migrate_projects(current_user: User = Depends(get_current_user)):
     finally:
         db.close()
 
+@app.post("/api/admin/migrate-predictions", tags=["Admin"])
+def admin_migrate_predictions(current_user: User = Depends(get_current_user)):
+    """
+    POST /api/admin/migrate-predictions
+    Secure administrative endpoint to trigger atomic ML risk predictions migration to PostgreSQL.
+    Strictly restricted to authenticated CENTRAL_AUTHORITY administrators.
+    """
+    if current_user.authority_type != "CENTRAL_AUTHORITY":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Migration requires Central Authority administrative privileges."
+        )
+    from backend.scripts.migrate_predictions_to_postgres import run_predictions_migration
+    from backend.db.database import SessionLocal
+    from backend.models import Project, RiskPrediction, Alert, ReportMetadata
+
+    success = run_predictions_migration(commit=True, allow_sqlite=True)
+    if not success:
+        raise HTTPException(status_code=500, detail="ML Risk Predictions migration failed.")
+    
+    db = SessionLocal()
+    try:
+        p_count = db.query(Project).count()
+        r_count = db.query(RiskPrediction).count()
+        a_count = db.query(Alert).count()
+        rep_count = db.query(ReportMetadata).count()
+        return {
+            "status": "success",
+            "message": "ML Risk Predictions migration completed successfully.",
+            "dialect": db.bind.dialect.name,
+            "projects_count": p_count,
+            "risk_predictions_count": r_count,
+            "alerts_count": a_count,
+            "reports_count": rep_count
+        }
+    finally:
+        db.close()
+
+
 
 
 
