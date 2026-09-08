@@ -9,7 +9,7 @@ if _parent_dir not in sys.path:
 if _current_dir not in sys.path:
     sys.path.insert(0, _current_dir)
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
@@ -17,6 +17,8 @@ import logging
 from backend.config import settings
 from backend.ml.model_loader import model_loader
 from backend.db.database import init_db, check_db_connection
+from backend.models.user_model import User
+from backend.utils.dependencies import get_current_user
 from backend.routers import (
     predict,
     projects,
@@ -115,6 +117,45 @@ def health_check():
             "time_regressor": model_loader.time_regressor is not None
         }
     }
+
+@app.post("/api/admin/migrate-projects", tags=["Admin"])
+def admin_migrate_projects(current_user: User = Depends(get_current_user)):
+    """
+    POST /api/admin/migrate-projects
+    Secure administrative endpoint to trigger atomic project data migration to PostgreSQL.
+    Strictly restricted to authenticated CENTRAL_AUTHORITY administrators.
+    """
+    if current_user.authority_type != "CENTRAL_AUTHORITY":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Migration requires Central Authority administrative privileges."
+        )
+    from backend.scripts.migrate_data_to_postgres import run_project_migration
+    from backend.db.database import SessionLocal
+    from backend.models import Project, RiskPrediction, Alert, ReportMetadata
+
+    success = run_project_migration(commit=True, allow_sqlite=True)
+    if not success:
+        raise HTTPException(status_code=500, detail="Project data migration failed.")
+    
+    db = SessionLocal()
+    try:
+        p_count = db.query(Project).count()
+        r_count = db.query(RiskPrediction).count()
+        a_count = db.query(Alert).count()
+        rep_count = db.query(ReportMetadata).count()
+        return {
+            "status": "success",
+            "message": "Project data migration completed successfully.",
+            "dialect": db.bind.dialect.name,
+            "projects_count": p_count,
+            "risk_predictions_count": r_count,
+            "alerts_count": a_count,
+            "reports_count": rep_count
+        }
+    finally:
+        db.close()
+
 
 
 
