@@ -2,13 +2,26 @@ services:
   - type: web
     name: drishti-ai-backend
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --no-cache-dir -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.8
+      - key: ENVIRONMENT
+        value: production
       - key: ML_MODE
         value: real
       - key: CORS_ORIGIN_REGEX
         value: "^https://.*\\.vercel\\.app$"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: drishti-ai-postgres
+          property: connectionString
+
+databases:
+  - name: drishti-ai-postgres
+    databaseName: drishti_db
+    user: drishti_user
+    plan: free
+
 
