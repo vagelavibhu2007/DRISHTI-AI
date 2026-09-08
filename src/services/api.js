@@ -1,16 +1,27 @@
 import axios from 'axios';
 import { MOCK_PROJECTS, DASHBOARD_STATS, EARLY_WARNING_ALERTS } from '../data/mockData';
 
-const RAW_API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '';
-const API_BASE_URL = RAW_API_URL
-  ? (RAW_API_URL.endsWith('/api') ? RAW_API_URL : `${RAW_API_URL.replace(/\/+$/, '')}/api`)
-  : (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://localhost:8000/api'
-      : '/api');
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
+    const clean = envUrl.trim().replace(/\/+$/, '');
+    return clean.endsWith('/api') ? clean : `${clean}/api`;
+  }
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:8000/api';
+    }
+    // In browser on deployed host (e.g. Vercel), use relative '/api' so Vercel rewrites proxy all requests seamlessly
+    return '/api';
+  }
+  return 'https://drishti-ai-r9gq.onrender.com/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   }
@@ -137,9 +148,15 @@ export const api = {
       const response = await apiClient.get(`/projects/${projectId}`);
       return { success: true, data: response.data, source: 'API' };
     } catch (error) {
+      if (error.response && (error.response.status === 403 || error.response.status === 404)) {
+        return {
+          success: false,
+          status: error.response.status,
+          error: error.response.data?.detail || (error.response.status === 403 ? 'Access forbidden.' : 'Project not found.')
+        };
+      }
       console.warn(`API /projects/${projectId} unreachable:`, error.message);
-      const found = MOCK_PROJECTS.find((p) => String(p.projectId) === String(projectId)) || MOCK_PROJECTS[0];
-      return { success: true, data: found, source: 'LOCAL' };
+      return { success: false, status: 500, error: error.message || 'Service unavailable' };
     }
   },
 
@@ -150,9 +167,7 @@ export const api = {
       return { success: true, data: response.data.highRiskProjects, total: response.data.total, source: 'API' };
     } catch (error) {
       console.warn('API /risk/high-risk unreachable:', error.message);
-      const filtered = MOCK_PROJECTS.filter((p) => p.riskLevel === 'CRITICAL' || p.riskLevel === 'HIGH')
-        .sort((a, b) => b.overallRisk - a.overallRisk);
-      return { success: true, data: filtered, total: filtered.length, source: 'LOCAL' };
+      return { success: false, data: [], total: 0, error: error.message };
     }
   },
 
@@ -162,22 +177,15 @@ export const api = {
       const response = await apiClient.get(`/explain/${projectId}`);
       return { success: true, data: response.data, source: 'API' };
     } catch (error) {
+      if (error.response && (error.response.status === 403 || error.response.status === 404)) {
+        return {
+          success: false,
+          status: error.response.status,
+          error: error.response.data?.detail || 'Explanation unauthorized.'
+        };
+      }
       console.warn(`API /explain/${projectId} unreachable:`, error.message);
-      return {
-        success: true,
-        data: {
-          project_id: projectId,
-          top_contributing_features: [
-            { feature: 'Expenditure_Pct_of_Original_Cost', impact: 32.0, direction: 'increases_risk', display_name: 'Expenditure vs Sanction Ratio', detail: 'Financial spend variance relative to ground progress' },
-            { feature: 'Physical_Progress_Pct', impact: 24.0, direction: 'increases_risk', display_name: 'Physical Progress Velocity', detail: 'Ground delivery lagging baseline planned schedule' },
-            { feature: 'Sector', impact: 18.0, direction: 'increases_risk', display_name: 'Historical Sector Risk Baseline', detail: 'Baseline sector hazard rate' },
-            { feature: 'Cumulative_Expenditure_Cr', impact: 15.0, direction: 'increases_risk', display_name: 'Cumulative Financial Drawdowns', detail: 'Monthly fund utilization rate' },
-            { feature: 'State', impact: 8.0, direction: 'increases_risk', display_name: 'State Spatial Pattern', detail: 'Statutory clearances in regional cluster' },
-            { feature: 'Central_Budget', impact: 7.0, direction: 'reduces_risk', display_name: 'Central Budgetary Tranche', detail: 'Approved PMKSY / PMG fund allocation' }
-          ]
-        },
-        source: 'LOCAL'
-      };
+      return { success: false, error: error.message };
     }
   },
 
@@ -235,75 +243,11 @@ export const api = {
         const response = await apiClient.post('/auth/login', credentials);
         return response.data;
       } catch (error) {
-        // If server responded with a status code from backend (e.g. 400, 401, 403, 422, 500)
         if (error.response) {
           const message = error.response.data?.detail || error.response.data?.message || 'Invalid username or password.';
           throw new Error(message);
         }
-
-        // If backend is offline or unreachable from Vercel deployment without public backend
-        console.warn('Backend API unreachable. Resolving demo credentials for offline/Vercel preview:', error.message);
-
-        const uname = credentials.username?.trim().toLowerCase();
-        const pwd = credentials.password;
-
-        if (uname === 'vibhu' && pwd === 'Vibhu@127') {
-          return {
-            access_token: 'demo-central-jwt-token-vibhu-2026',
-            token_type: 'bearer',
-            user: {
-              id: 1,
-              username: 'vibhu',
-              first_name: 'Vibhu',
-              last_name: 'Vagela',
-              full_name: 'Vibhu Vagela',
-              email: 'vagelavibhu2007@gmail.com',
-              mobile_number: '9876543210',
-              authority_type: 'CENTRAL_AUTHORITY',
-              state: null,
-              position: 'Chief Project Officer (Central)',
-              id_proof_type: 'Aadhaar Card',
-              masked_id_proof_number: 'XXXX XXXX 9012',
-              has_profile_photo: false,
-              profile_photo_url: null,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              last_login: new Date().toISOString()
-            },
-            message: 'Authentication successful (Demo Mode)'
-          };
-        }
-
-        if (uname === 'priya_patel' && pwd === 'Password@123') {
-          return {
-            access_token: 'demo-state-jwt-token-priya-2026',
-            token_type: 'bearer',
-            user: {
-              id: 2,
-              username: 'priya_patel',
-              first_name: 'Priya',
-              last_name: 'Patel',
-              full_name: 'Priya Patel',
-              email: 'priya.patel@gujarat.gov.in',
-              mobile_number: '9876543211',
-              authority_type: 'STATE_AUTHORITY',
-              state: 'Gujarat',
-              position: 'Principal Secretary (Infrastructure - Gujarat)',
-              id_proof_type: 'Government / Service ID Card',
-              masked_id_proof_number: 'XXXX8891',
-              has_profile_photo: false,
-              profile_photo_url: null,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              last_login: new Date().toISOString()
-            },
-            message: 'Authentication successful (Demo Mode)'
-          };
-        }
-
-        throw new Error(
-          'Backend API is unreachable (Network Error). For demo login on Vercel, please use 1-Click Autofill credentials (vibhu or priya_patel), or configure VITE_API_BASE_URL to your deployed backend.'
-        );
+        throw new Error(error.message || 'Unable to connect to backend server. Please try again.');
       }
     },
     register: async (formData) => {
@@ -316,39 +260,16 @@ export const api = {
         if (error.response) {
           throw new Error(error.response.data?.detail || 'Registration failed.');
         }
-        console.warn('Backend API unreachable for register, using demo mode response:', error.message);
-        const uname = formData instanceof FormData ? formData.get('username') : formData?.username;
-        const authType = formData instanceof FormData ? formData.get('authority_type') : formData?.authority_type;
-        const st = formData instanceof FormData ? formData.get('state') : formData?.state;
-        return {
-          success: true,
-          user_id: Date.now(),
-          username: uname || 'officer',
-          authority_type: authType || 'CENTRAL_AUTHORITY',
-          state: st || null,
-          message: 'Officer registration submitted successfully (Demo Mode).'
-        };
+        throw new Error(error.message || 'Unable to connect to registration server. Please try again.');
       }
     },
     getMe: async () => {
-      const token = localStorage.getItem('drishti_auth_token');
-      if (token && token.startsWith('demo-')) {
-        const cached = localStorage.getItem('drishti_user');
-        if (cached) {
-          try {
-            return JSON.parse(cached);
-          } catch (e) {}
-        }
-      }
       try {
         const response = await apiClient.get('/auth/me');
         return response.data;
       } catch (error) {
-        const cached = localStorage.getItem('drishti_user');
-        if (cached) {
-          try {
-            return JSON.parse(cached);
-          } catch (e) {}
+        if (error.response) {
+          throw new Error(error.response.data?.detail || 'Failed to retrieve session.');
         }
         throw error;
       }
@@ -359,7 +280,7 @@ export const api = {
         return response.data;
       } catch (error) {
         if (error.response) throw new Error(error.response.data?.detail || 'Failed to update profile.');
-        return profileData;
+        throw error;
       }
     },
     changePassword: async (passwordData) => {
@@ -368,7 +289,7 @@ export const api = {
         return response.data;
       } catch (error) {
         if (error.response) throw new Error(error.response.data?.detail || 'Failed to change password.');
-        return { success: true, message: 'Password updated successfully (Demo Mode).' };
+        throw error;
       }
     },
     forgotPassword: async (email) => {
@@ -377,7 +298,7 @@ export const api = {
         return response.data;
       } catch (error) {
         if (error.response) throw new Error(error.response.data?.detail || 'Failed to request reset.');
-        return { success: true, message: 'Password reset link dispatched to email.' };
+        throw error;
       }
     },
     resetPassword: async (resetData) => {
@@ -386,7 +307,7 @@ export const api = {
         return response.data;
       } catch (error) {
         if (error.response) throw new Error(error.response.data?.detail || 'Failed to reset password.');
-        return { success: true, message: 'Password has been reset successfully.' };
+        throw error;
       }
     },
     getStates: async () => {
@@ -415,4 +336,5 @@ export const api = {
 };
 
 export default api;
+
 

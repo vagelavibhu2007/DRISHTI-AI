@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = [
         origin.strip() for origin in os.getenv(
             "CORS_ORIGINS",
-            "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000"
+            "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000,https://drishti-ai-ruby.vercel.app"
         ).split(",") if origin.strip()
     ]
     CORS_ORIGIN_REGEX: str = os.getenv("CORS_ORIGIN_REGEX", r"^https:\/\/.*\.vercel\.app$|^https:\/\/.*\.onrender\.com$|^https:\/\/.*\.railway\.app$")
