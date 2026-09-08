@@ -194,6 +194,71 @@ def admin_migrate_predictions(current_user: User = Depends(get_current_user)):
     finally:
         db.close()
 
+@app.get("/api/admin/users", tags=["Admin"])
+def admin_get_users(current_user: User = Depends(get_current_user)):
+    """
+    GET /api/admin/users
+    Read-only administrative endpoint to view registered users in PostgreSQL.
+    Strictly restricted to CENTRAL_AUTHORITY administrators.
+    Never exposes passwords, password hashes, JWT secrets, or ID documents.
+    """
+    if current_user.authority_type != "CENTRAL_AUTHORITY":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: Viewing registered users requires Central Authority administrative privileges."
+        )
+    from backend.db.database import SessionLocal
+    from backend.models.user_model import User as UserModel
+
+    db = SessionLocal()
+    try:
+        users = db.query(UserModel).order_by(UserModel.id.asc()).all()
+        user_list = []
+        central_count = 0
+        state_count = 0
+        state_breakdown = {}
+
+        for u in users:
+            # Mask mobile number: keep last 4 digits
+            raw_mob = str(u.mobile_number or "")
+            if len(raw_mob) >= 4:
+                masked_mob = "******" + raw_mob[-4:]
+            else:
+                masked_mob = "******"
+
+            auth_type = u.authority_type or "UNKNOWN"
+            if auth_type == "CENTRAL_AUTHORITY":
+                central_count += 1
+            elif auth_type == "STATE_AUTHORITY":
+                state_count += 1
+                st = u.state or "Unassigned"
+                state_breakdown[st] = state_breakdown.get(st, 0) + 1
+
+            user_list.append({
+                "id": u.id,
+                "username": u.username,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "email": u.email,
+                "mobile": masked_mob,
+                "position": u.position,
+                "authority_type": u.authority_type,
+                "state": u.state,
+                "created_at": u.created_at.strftime("%Y-%m-%d %H:%M:%S UTC") if u.created_at else None
+            })
+
+        return {
+            "dialect": db.bind.dialect.name,
+            "total_users": len(user_list),
+            "central_authority_count": central_count,
+            "state_authority_count": state_count,
+            "state_breakdown": state_breakdown,
+            "users": user_list
+        }
+    finally:
+        db.close()
+
+
 
 
 
