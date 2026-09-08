@@ -1,3 +1,14 @@
+import sys
+import os
+
+# Ensure portable import resolution in any deployment context (root or backend subdirectory)
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_parent_dir = os.path.dirname(_current_dir)
+if _parent_dir not in sys.path:
+    sys.path.insert(0, _parent_dir)
+if _current_dir not in sys.path:
+    sys.path.insert(0, _current_dir)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -5,7 +16,7 @@ import logging
 
 from backend.config import settings
 from backend.ml.model_loader import model_loader
-from backend.db.database import init_db
+from backend.db.database import init_db, check_db_connection
 from backend.routers import (
     predict,
     projects,
@@ -83,12 +94,19 @@ def root():
 def health_check():
     """
     GET /health & GET /api/health
-    Production health check endpoint reporting service status and loaded ML models.
+    Production health check endpoint reporting service status, database connectivity, and loaded ML models.
+    Never exposes database credentials or connection strings.
     """
+    db_check = check_db_connection()
     return {
         "status": "ok",
         "service": "DRISHTI AI Backend",
         "version": settings.APP_VERSION,
+        "database": {
+            "connected": db_check.get("connected", False),
+            "dialect": db_check.get("dialect", "unknown")
+        },
+        "database_dialect": db_check.get("dialect", "unknown"),
         "ml_mode": settings.ML_MODE,
         "models_loaded": {
             "cost_classifier": model_loader.is_cost_classifier_ready,

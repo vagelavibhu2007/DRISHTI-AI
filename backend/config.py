@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "DRISHTI AI - Infrastructure Risk Backend"
     APP_VERSION: str = "4.2.0"
     API_PREFIX: str = "/api"
+    BASE_DIR: str = BASE_DIR
     
     # ML Mode: "real" or "mock"
     ML_MODE: str = os.getenv("ML_MODE", "real")
@@ -53,11 +54,27 @@ class Settings(BaseSettings):
     ]
     CORS_ORIGIN_REGEX: str = os.getenv("CORS_ORIGIN_REGEX", r"^https:\/\/.*\.vercel\.app$|^https:\/\/.*\.onrender\.com$|^https:\/\/.*\.railway\.app$")
 
+    # Environment mode: 'development', 'staging', 'production'
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+
     # Authentication & Security Settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{default_db_path}")
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL",
+        f"sqlite:///{default_db_path}" if os.getenv("ENVIRONMENT", "development").lower() not in ["production", "prod"] else ""
+    )
+    DB_POOL_SIZE: int = int(os.getenv("DB_POOL_SIZE", "10"))
+    DB_MAX_OVERFLOW: int = int(os.getenv("DB_MAX_OVERFLOW", "20"))
+    DB_POOL_RECYCLE: int = int(os.getenv("DB_POOL_RECYCLE", "300"))
+    DB_POOL_TIMEOUT: int = int(os.getenv("DB_POOL_TIMEOUT", "30"))
+
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "drishti-ai-secure-secret-key-national-infra-2026-auth")
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440")) # 24 hours
+
+    # Initial Admin Seed Configuration (Optional overrides via env)
+    INITIAL_ADMIN_USERNAME: str = os.getenv("INITIAL_ADMIN_USERNAME", "vibhu")
+    INITIAL_ADMIN_PASSWORD: str = os.getenv("INITIAL_ADMIN_PASSWORD", "Vibhu@127")
+    INITIAL_ADMIN_EMAIL: str = os.getenv("INITIAL_ADMIN_EMAIL", "vagelavibhu2007@gmail.com")
     
     # Storage paths
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", default_upload_dir)
@@ -70,6 +87,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
 
