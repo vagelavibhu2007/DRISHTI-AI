@@ -1,0 +1,12 @@
+backend/
+requirements.txt
+Dockerfile
+Procfile
+render.yaml
+api/
+*.py
+*.db
+scratch/
+uploads/
+
+
