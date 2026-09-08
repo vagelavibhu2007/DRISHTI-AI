@@ -5,6 +5,7 @@ import secrets
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
 from typing import Optional
 
 from backend.config import settings
@@ -99,10 +100,10 @@ async def register_user(
     if not username.replace("_", "").replace(".", "").isalnum():
         raise HTTPException(status_code=400, detail="Username may only contain letters, numbers, underscores, and dots.")
 
-    if db.query(User).filter(User.username == username).first():
+    if db.query(User).filter(func.lower(User.username) == username).first():
         raise HTTPException(status_code=400, detail=f"Username '{username}' is already taken. Please choose another username.")
 
-    if db.query(User).filter(User.email == email).first():
+    if db.query(User).filter(func.lower(User.email) == email).first():
         raise HTTPException(status_code=400, detail=f"Email address '{email}' is already registered.")
 
     clean_mobile = mobile_number[-10:]
@@ -182,10 +183,16 @@ async def register_user(
 
 @router.post("/login", response_model=TokenResponse)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
-    username = request.username.strip().lower()
+    clean_identifier = request.username.strip()
     password = request.password
 
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(
+        or_(
+            func.lower(User.username) == clean_identifier.lower(),
+            func.lower(User.email) == clean_identifier.lower()
+        )
+    ).first()
+
     if not user or not verify_password(password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -265,8 +272,13 @@ def change_password(
 
 @router.post("/forgot-password")
 def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    ident = request.get_identifier().strip().lower()
-    user = db.query(User).filter((User.username == ident) | (User.email == ident)).first()
+    ident = request.get_identifier().strip()
+    user = db.query(User).filter(
+        or_(
+            func.lower(User.username) == ident.lower(),
+            func.lower(User.email) == ident.lower()
+        )
+    ).first()
 
     success_msg = "If the account exists, password recovery instructions have been initiated."
 
@@ -292,7 +304,7 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
 
 @router.post("/reset-password")
 def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
-    ident = request.get_identifier().strip().lower()
+    ident = request.get_identifier().strip()
     token_str = request.get_token().strip()
 
     if not token_str:
@@ -300,7 +312,11 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
 
     if ident:
         user = db.query(User).filter(
-            ((User.username == ident) | (User.email == ident)) & (User.reset_token == token_str)
+            or_(
+                func.lower(User.username) == ident.lower(),
+                func.lower(User.email) == ident.lower()
+            ),
+            User.reset_token == token_str
         ).first()
     else:
         user = db.query(User).filter(User.reset_token == token_str).first()
@@ -332,7 +348,8 @@ def logout():
 
 @router.get("/profile-photo/{username}")
 def get_profile_photo(username: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == username.strip().lower()).first()
+    clean_uname = username.strip()
+    user = db.query(User).filter(func.lower(User.username) == clean_uname.lower()).first()
     if not user or not user.profile_photo_path or not os.path.exists(user.profile_photo_path):
         raise HTTPException(status_code=404, detail="Profile photo not found.")
     
