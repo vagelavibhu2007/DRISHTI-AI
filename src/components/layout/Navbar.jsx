@@ -3,10 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Bell,
   Search,
-  Calendar,
   Sparkles,
-  Bot,
-  Sliders,
   CheckCircle2,
   ExternalLink,
   Shield,
@@ -74,37 +71,6 @@ export const Navbar = () => {
 
       {/* Right Area: System Status, Date & Actions */}
       <div className="flex items-center gap-3">
-        {/* AI Model Status */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-mono">ML Predictor Active (94.6% Acc.)</span>
-        </div>
-
-        {/* Last Updated Timestamp */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-slate-100/80 rounded-lg text-slate-600 text-xs font-medium border border-slate-200">
-          <Calendar className="w-3.5 h-3.5 text-slate-500" />
-          <span className="text-[11px] text-slate-500 font-semibold">Updated:</span>
-          <span className="font-mono font-bold text-slate-800">{stats.lastUpdated}</span>
-        </div>
-
-        {/* Quick Simulator CTA */}
-        <NavLink
-          to="/what-if"
-          className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-gov-700 bg-gov-50 hover:bg-gov-100 border border-gov-200 transition"
-        >
-          <Sliders className="w-3.5 h-3.5 text-gov-600" />
-          <span>Simulate What-If</span>
-        </NavLink>
-
-        {/* Quick Assistant CTA */}
-        <NavLink
-          to="/assistant"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gov-700 hover:bg-gov-800 shadow-sm transition"
-        >
-          <Bot className="w-3.5 h-3.5 text-sky-300" />
-          <span className="hidden md:inline">AI Copilot</span>
-        </NavLink>
-
         {/* Notifications Popover Trigger */}
         <div className="relative">
           <button

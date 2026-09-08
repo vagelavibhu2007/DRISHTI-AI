@@ -189,4 +189,59 @@ export const isProjectInState = (projectOrState, targetState) => {
   return projectStates.includes(normTarget);
 };
 
+export const exportProjectsToCSV = (projectsList, filename = 'drishti_projects_export.csv') => {
+  if (!projectsList || !projectsList.length) {
+    alert('No projects available to export.');
+    return;
+  }
+
+  const headers = [
+    'Project ID',
+    'Project Name',
+    'Ministry',
+    'Sector',
+    'State',
+    'District',
+    'Original Cost (Cr)',
+    'Cumulative Expenditure (Cr)',
+    'Physical Progress (%)',
+    'Expenditure (%)',
+    'Cost Risk (%)',
+    'Time Risk (%)',
+    'Overall Risk Score',
+    'Risk Level',
+    'Status'
+  ];
+
+  const rows = projectsList.map((p) => [
+    `"${p.projectId || ''}"`,
+    `"${(p.projectName || '').replace(/"/g, '""')}"`,
+    `"${(p.ministry || '').replace(/"/g, '""')}"`,
+    `"${(p.sector || '').replace(/"/g, '""')}"`,
+    `"${(p.state || '').replace(/"/g, '""')}"`,
+    `"${(p.district || '').replace(/"/g, '""')}"`,
+    p.originalCost ?? '',
+    p.cumulativeExpenditure ?? '',
+    p.physicalProgress ?? '',
+    p.expenditurePercentage ?? '',
+    p.costRisk ?? '',
+    p.timeRisk ?? '',
+    p.overallRisk ?? '',
+    `"${p.riskLevel || ''}"`,
+    `"${p.status || ''}"`
+  ]);
+
+  const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+
 

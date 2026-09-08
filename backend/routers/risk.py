@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, Depends
 from typing import Optional
 from backend.data.project_repository import project_repository
 from backend.models.user_model import User
-from backend.utils.dependencies import get_optional_current_user
+from backend.utils.dependencies import get_optional_current_user, get_user_authorized_state
 
 router = APIRouter(prefix="/risk", tags=["Risk Rankings"])
 
@@ -20,8 +20,9 @@ def get_high_risk_projects(
     Identifies and returns projects with Overall Risk Score >= 50, strictly sorted DESC.
     For authenticated State Authority users, automatically restricts to assigned state.
     """
-    if current_user and current_user.authority_type == "STATE_AUTHORITY" and current_user.state:
-        state = current_user.state
+    auth_state = get_user_authorized_state(current_user)
+    if auth_state:
+        state = auth_state
 
     projects = project_repository.get_all(
         sort_by="overallRisk",

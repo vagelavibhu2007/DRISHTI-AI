@@ -287,3 +287,4 @@ if __name__ == "__main__":
     success = run_predictions_migration(commit=args.commit, allow_sqlite=args.allow_sqlite)
     if not success:
         sys.exit(1)
+

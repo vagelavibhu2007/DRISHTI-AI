@@ -14,16 +14,28 @@ import {
 } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
 import { REPORTS_LIST } from '../data/mockData';
+import { useDashboard } from '../context/DashboardContext';
+import { useAuth } from '../context/AuthContext';
+import { exportProjectsToCSV } from '../utils/riskUtils';
 
 export const Reports = () => {
+  const { projects, stats } = useDashboard();
+  const { isStateAuthority, assignedState } = useAuth();
   const [toastMessage, setToastMessage] = useState(null);
   const [previewReport, setPreviewReport] = useState(null);
 
-  const handleAction = (actionName, reportTitle) => {
-    setToastMessage(`${actionName}: "${reportTitle}" — Demo functionality — report generation will be connected later.`);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 4500);
+  const handleExportCSV = (rep) => {
+    const filename = `${rep.id.toLowerCase()}_${isStateAuthority && assignedState ? assignedState.toLowerCase().replace(/\s+/g, '_') : 'national'}_data.csv`;
+    exportProjectsToCSV(projects, filename);
+    setToastMessage(`Exported ${projects.length} authorized records to ${filename}`);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleDownloadPDF = (rep) => {
+    // Generate official printable PDF view
+    window.print();
+    setToastMessage(`Generated printable dossier for "${rep.title}" (${projects.length} authorized records).`);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   return (
@@ -34,9 +46,9 @@ export const Reports = () => {
     >
       {/* Toast Notification for demo actions */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 p-4 bg-slate-900 text-white rounded-xl shadow-2xl border border-sky-500/40 flex items-center justify-between gap-4 animate-in slide-in-from-bottom-3 duration-200 max-w-md">
-          <div className="flex items-center gap-2.5 text-xs text-sky-200">
-            <Sparkles className="w-4 h-4 text-sky-400 flex-shrink-0" />
+        <div className="fixed bottom-6 right-6 z-50 p-4 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-700 flex items-center justify-between gap-4 animate-in slide-in-from-bottom-3 duration-200 max-w-md">
+          <div className="flex items-center gap-2.5 text-xs text-slate-200">
+            <AlertCircle className="w-4 h-4 text-sky-400 flex-shrink-0" />
             <span>{toastMessage}</span>
           </div>
           <button
@@ -90,15 +102,15 @@ export const Reports = () => {
                 </button>
 
                 <button
-                  onClick={() => handleAction('Export CSV', rep.title)}
+                  onClick={() => handleExportCSV(rep)}
                   className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg transition"
-                  title="Export CSV Data"
+                  title="Export Authorized CSV Data"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
                 </button>
 
                 <button
-                  onClick={() => handleAction('Generate PDF', rep.title)}
+                  onClick={() => handleDownloadPDF(rep)}
                   className="p-2 bg-gov-700 hover:bg-gov-800 text-white rounded-lg transition shadow-sm"
                   title="Generate Official PDF Dossier"
                 >
@@ -135,7 +147,7 @@ export const Reports = () => {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div><strong>ID:</strong> {previewReport.id}</div>
                   <div><strong>Date:</strong> {previewReport.generatedDate}</div>
-                  <div><strong>Coverage:</strong> 1,966 Active Projects</div>
+                  <div><strong>Coverage:</strong> {projects.length} Authorized Projects ({isStateAuthority && assignedState ? assignedState : 'National'})</div>
                   <div><strong>Confidence:</strong> 94.6% GBDT-SHAP</div>
                 </div>
               </div>
@@ -143,12 +155,12 @@ export const Reports = () => {
               <div>
                 <h4 className="font-bold text-slate-900 mb-1">Executive Summary Excerpt:</h4>
                 <p className="text-slate-600 leading-relaxed text-xs">
-                  {previewReport.description} Predictive hazard indices indicate an aggregate fiscal exposure of ₹11.42 Lakh Cr across 410 critical infrastructure assets. Proactive inter-ministerial resolution through PM-GatiShakti integration is recommended for top 5 critical corridors.
+                  {previewReport.description} Predictive hazard indices indicate an aggregate fiscal exposure of ₹{(stats.atRiskCapitalValueCr || 0).toLocaleString()} Cr across {stats.criticalProjects || 0} critical infrastructure assets in {isStateAuthority && assignedState ? `${assignedState} jurisdiction` : 'National portfolio'}.
                 </p>
               </div>
 
               <div className="p-3 bg-gov-50 text-gov-800 rounded-lg text-xs font-semibold">
-                Demo functionality — report generation will be connected later.
+                Official Government of India Intelligence Dossier — PM-GatiShakti Decision Support.
               </div>
             </div>
 
@@ -161,12 +173,13 @@ export const Reports = () => {
               </button>
               <button
                 onClick={() => {
+                  const rep = previewReport;
                   setPreviewReport(null);
-                  handleAction('PDF Download', previewReport.title);
+                  handleDownloadPDF(rep);
                 }}
                 className="px-4 py-2 bg-gov-700 hover:bg-gov-800 text-white text-xs font-bold rounded-lg transition"
               >
-                Download PDF
+                Print / Save PDF
               </button>
             </div>
           </div>

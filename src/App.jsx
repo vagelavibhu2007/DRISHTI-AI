@@ -22,8 +22,6 @@ import HighRiskProjects from './pages/HighRiskProjects';
 import PredictionTrends from './pages/PredictionTrends';
 import GeographicRisk from './pages/GeographicRisk';
 import Alerts from './pages/Alerts';
-import WhatIfAnalysis from './pages/WhatIfAnalysis';
-import AIAssistant from './pages/AIAssistant';
 import Reports from './pages/Reports';
 
 // Authenticated Layout Wrapper
@@ -132,22 +130,6 @@ export const App = () => {
         element={
           <AuthenticatedLayout>
             <Alerts />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/what-if"
-        element={
-          <AuthenticatedLayout>
-            <WhatIfAnalysis />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/assistant"
-        element={
-          <AuthenticatedLayout>
-            <AIAssistant />
           </AuthenticatedLayout>
         }
       />

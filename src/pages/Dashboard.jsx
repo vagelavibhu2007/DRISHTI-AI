@@ -16,7 +16,6 @@ import {
 import { useDashboard } from '../context/DashboardContext';
 import PageContainer from '../components/layout/PageContainer';
 import KPICard from '../components/dashboard/KPICard';
-import USPBanner from '../components/dashboard/USPBanner';
 import RiskOverview from '../components/dashboard/RiskOverview';
 import CostTimeRiskCards from '../components/dashboard/CostTimeRiskCards';
 import RiskTrend from '../components/dashboard/RiskTrend';
@@ -42,30 +41,20 @@ export const Dashboard = () => {
       title="Project Intelligence Dashboard"
       subtitle="AI-powered infrastructure project risk monitoring and early warning."
       action={
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsPredictionModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-gov-700 hover:bg-gov-800 rounded-lg shadow-sm transition"
-          >
-            <Cpu className="w-3.5 h-3.5 text-sky-300" />
-            <span>Run AI Risk Assessment</span>
-          </button>
-
-          <button
-            onClick={() => navigate('/what-if')}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-sm transition"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-gov-700" />
-            <span>Simulate What-If</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setIsPredictionModalOpen(true)}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-gov-700 hover:bg-gov-800 rounded-lg shadow-sm transition"
+        >
+          <Cpu className="w-3.5 h-3.5 text-sky-300" />
+          <span>Run AI Risk Assessment</span>
+        </button>
       }
     >
       {/* Top KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <KPICard
           title="Total Projects"
-          value={stats.totalProjects.toLocaleString()}
+          value={(stats?.totalProjects ?? 0).toLocaleString()}
           supportingText="Active Monitored Pipeline"
           icon={FolderGit2}
           onClick={() => {
@@ -76,7 +65,7 @@ export const Dashboard = () => {
 
         <KPICard
           title="Critical Projects"
-          value={stats.criticalProjects.toLocaleString()}
+          value={(stats?.criticalProjects ?? 0).toLocaleString()}
           supportingText="Requires Immediate Action"
           icon={Flame}
           trend="+2.4%"
@@ -90,7 +79,7 @@ export const Dashboard = () => {
 
         <KPICard
           title="High Risk"
-          value={stats.highRisk.toLocaleString()}
+          value={(stats?.highRisk ?? 0).toLocaleString()}
           supportingText="Elevated Delay/Cost Drift"
           icon={AlertTriangle}
           trend="+1.1%"
@@ -104,7 +93,7 @@ export const Dashboard = () => {
 
         <KPICard
           title="Medium Risk"
-          value={stats.mediumRisk.toLocaleString()}
+          value={(stats?.mediumRisk ?? 0).toLocaleString()}
           supportingText="Watchlist & Milestone Audit"
           icon={Activity}
           trend="-0.5%"
@@ -118,7 +107,7 @@ export const Dashboard = () => {
 
         <KPICard
           title="Low Risk"
-          value={stats.lowRisk.toLocaleString()}
+          value={(stats?.lowRisk ?? 0).toLocaleString()}
           supportingText="On-Schedule Execution"
           icon={CheckCircle}
           trend="-3.0%"
@@ -132,7 +121,7 @@ export const Dashboard = () => {
 
         <KPICard
           title="Avg Risk Score"
-          value={Number(stats.averageRiskScore).toFixed(1)}
+          value={Number(stats?.averageRiskScore ?? 0).toFixed(1)}
           supportingText="National Hazard Baseline"
           icon={Gauge}
           trend="0 - 100 Index"
@@ -140,9 +129,6 @@ export const Dashboard = () => {
           onClick={() => navigate('/risk-analytics')}
         />
       </div>
-
-      {/* Major USP Highlight Section: "From Monitoring to Prediction" */}
-      <USPBanner />
 
       {/* Section 2: Overall Project Risk & Cost/Time Risk Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -157,13 +143,13 @@ export const Dashboard = () => {
       {/* Section 3: Risk Score Trend */}
       <RiskTrend />
 
-      {/* Section 4: Early Warning Radar Cards */}
+      {/* Section 4: Early Warning Alerts */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-gov-700" />
-              Active Early Warning Radar
+              <AlertTriangle className="w-4 h-4 text-orange-600" />
+              Active Early Warnings & Anomaly Alerts
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               High-priority alerts generated by machine learning anomaly detection

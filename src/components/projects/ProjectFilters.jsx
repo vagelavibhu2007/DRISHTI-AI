@@ -1,6 +1,7 @@
 import React from 'react';
 import { RotateCcw, Filter, Building2, MapPin, Layers, ShieldAlert } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
+import { useAuth } from '../../context/AuthContext';
 import { SearchBar } from '../common/SearchBar';
 import { FilterDropdown } from '../common/FilterDropdown';
 
@@ -18,13 +19,14 @@ export const ProjectFilters = ({ showCount = true, resultsCount = 0 }) => {
     setSelectedStateFilter,
     clearAllFilters
   } = useDashboard();
+  const { isStateAuthority, assignedState } = useAuth();
 
   const isFiltered =
     searchQuery ||
     selectedRiskFilter !== 'ALL' ||
     selectedMinistryFilter !== 'ALL' ||
     selectedSectorFilter !== 'ALL' ||
-    selectedStateFilter !== 'ALL';
+    (!isStateAuthority && selectedStateFilter !== 'ALL');
 
   const riskOptions = [
     { value: 'ALL', label: 'All Risk Levels' },
@@ -58,24 +60,27 @@ export const ProjectFilters = ({ showCount = true, resultsCount = 0 }) => {
     { value: 'Civil Aviation', label: 'Civil Aviation' },
   ];
 
-  const stateOptions = [
-    { value: 'ALL', label: 'All States' },
-    { value: 'Maharashtra', label: 'Maharashtra' },
-    { value: 'Punjab', label: 'Punjab' },
-    { value: 'West Bengal', label: 'West Bengal' },
-    { value: 'Haryana', label: 'Haryana' },
-    { value: 'Uttar Pradesh', label: 'Uttar Pradesh' },
-    { value: 'Bihar', label: 'Bihar' },
-    { value: 'Rajasthan', label: 'Rajasthan' },
-    { value: 'Gujarat', label: 'Gujarat' },
-    { value: 'Odisha', label: 'Odisha' },
-    { value: 'Tamil Nadu', label: 'Tamil Nadu' },
-    { value: 'Karnataka', label: 'Karnataka' },
-    { value: 'Andhra Pradesh', label: 'Andhra Pradesh' },
-    { value: 'Assam', label: 'Assam' },
-    { value: 'Madhya Pradesh', label: 'Madhya Pradesh' },
-    { value: 'Kerala', label: 'Kerala' },
-  ];
+  const stateOptions = isStateAuthority && assignedState
+    ? [{ value: assignedState, label: `${assignedState} (Jurisdiction)` }]
+    : [
+        { value: 'ALL', label: 'All States' },
+        { value: 'Maharashtra', label: 'Maharashtra' },
+        { value: 'Punjab', label: 'Punjab' },
+        { value: 'West Bengal', label: 'West Bengal' },
+        { value: 'Haryana', label: 'Haryana' },
+        { value: 'Uttar Pradesh', label: 'Uttar Pradesh' },
+        { value: 'Bihar', label: 'Bihar' },
+        { value: 'Rajasthan', label: 'Rajasthan' },
+        { value: 'Gujarat', label: 'Gujarat' },
+        { value: 'Odisha', label: 'Odisha' },
+        { value: 'Tamil Nadu', label: 'Tamil Nadu' },
+        { value: 'Karnataka', label: 'Karnataka' },
+        { value: 'Andhra Pradesh', label: 'Andhra Pradesh' },
+        { value: 'Assam', label: 'Assam' },
+        { value: 'Madhya Pradesh', label: 'Madhya Pradesh' },
+        { value: 'Kerala', label: 'Kerala' },
+        { value: 'Telangana', label: 'Telangana' },
+      ];
 
   return (
     <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 shadow-card space-y-4">

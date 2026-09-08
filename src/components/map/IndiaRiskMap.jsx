@@ -287,19 +287,28 @@ export const IndiaRiskMap = () => {
         <div className="flex flex-wrap items-center gap-2.5">
           {/* State Filter */}
           <select
-            value={selectedState}
+            value={isStateAuthority && assignedState ? assignedState : selectedState}
+            disabled={isStateAuthority && !!assignedState}
             onChange={(e) => {
-              setSelectedState(e.target.value);
-              setSelectedProject(null);
+              if (!isStateAuthority) {
+                setSelectedState(e.target.value);
+                setSelectedProject(null);
+              }
             }}
-            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-gov-700/20"
+            className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-gov-700/20 disabled:opacity-80"
           >
-            <option value="ALL">All States (National View)</option>
-            {INDIA_STATE_PATHS.map((s) => (
-              <option key={s.name} value={s.name}>
-                {s.name} ({stateStats[s.name] ? stateStats[s.name].projects : 0} projects)
-              </option>
-            ))}
+            {isStateAuthority && assignedState ? (
+              <option value={assignedState}>{assignedState} (State Jurisdiction)</option>
+            ) : (
+              <>
+                <option value="ALL">All States (National View)</option>
+                {INDIA_STATE_PATHS.map((s) => (
+                  <option key={s.name} value={s.name}>
+                    {s.name} ({stateStats[s.name] ? stateStats[s.name].projects : 0} projects)
+                  </option>
+                ))}
+              </>
+            )}
           </select>
 
           {/* Risk Filter */}

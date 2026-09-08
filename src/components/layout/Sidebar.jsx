@@ -8,8 +8,6 @@ import {
   TrendingUp,
   Map,
   BellRing,
-  Sliders,
-  Bot,
   FileText,
   Settings,
   HelpCircle,
@@ -26,14 +24,12 @@ export const Sidebar = () => {
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/projects', label: 'Projects', icon: FolderGit2, badge: '1,966' },
+    { to: '/projects', label: 'Projects', icon: FolderGit2, badge: (stats?.totalProjects ?? 0).toLocaleString() },
     { to: '/risk-analytics', label: 'Risk Analytics', icon: PieChart },
     { to: '/high-risk', label: 'High-Risk Projects', icon: Flame, badge: stats.criticalProjects, badgeColor: 'bg-red-500 text-white' },
     { to: '/trends', label: 'Prediction Trends', icon: TrendingUp },
     { to: '/map', label: 'Geographic Risk', icon: Map },
     { to: '/alerts', label: 'Early Warnings', icon: BellRing, badge: stats.totalActiveAlerts, badgeColor: 'bg-orange-500 text-white' },
-    { to: '/what-if', label: 'What-If Analysis', icon: Sliders, isNew: true },
-    { to: '/assistant', label: 'AI Assistant', icon: Bot, isAi: true },
     { to: '/reports', label: 'Reports', icon: FileText },
   ];
 
@@ -44,19 +40,17 @@ export const Sidebar = () => {
       }`}
     >
       {/* Brand Header */}
-      <div className="h-16 flex items-center px-4 border-b border-gov-900/80 bg-gov-950/80 backdrop-blur-md justify-between">
+      <div className="h-16 flex items-center px-4 border-b border-slate-800 bg-slate-950 justify-between">
         <NavLink to="/dashboard" className="flex items-center gap-3 overflow-hidden group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-gov-700 via-gov-600 to-sky-400 p-0.5 shadow-lg shadow-sky-950/50 flex-shrink-0 flex items-center justify-center">
-            <div className="w-full h-full bg-gov-950 rounded-[10px] flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-sky-400 group-hover:scale-110 transition-transform" />
-            </div>
+          <div className="w-9 h-9 rounded-lg bg-gov-700 text-white flex-shrink-0 flex items-center justify-center shadow-sm">
+            <ShieldCheck className="w-5 h-5 text-sky-300 group-hover:scale-105 transition-transform" />
           </div>
 
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-white text-base tracking-wider font-mono">DRISHTI</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                   AI
                 </span>
               </div>

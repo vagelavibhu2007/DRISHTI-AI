@@ -7,12 +7,12 @@ import {
   DollarSign,
   Clock,
   Gauge,
-  Sliders,
   Sparkles,
   ArrowLeft,
   AlertTriangle,
   Cpu,
-  Info
+  Info,
+  ShieldCheck
 } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 import { api } from '../services/api';
@@ -29,37 +29,84 @@ export const ProjectDetails = () => {
   const navigate = useNavigate();
   const { projects, alerts, updateAlertStatus } = useDashboard();
 
-  const [projectData, setProjectData] = useState(null);
+  // Initialize state
+  const [projectData, setProjectData] = useState(() => {
+    return projects.find((p) => String(p.projectId) === String(id)) || null;
+  });
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [isForbidden, setIsForbidden] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchDetail = async () => {
       setIsLoading(true);
+      setLoadError(null);
+      setIsForbidden(false);
+
       try {
         const res = await api.getProjectById(id);
-        if (res.success && res.data) {
-          setProjectData(res.data);
-        } else {
-          const fallback = projects.find((p) => String(p.projectId) === String(id)) || projects[0];
-          setProjectData(fallback);
+        if (isMounted) {
+          if (res.success && res.data) {
+            setProjectData(res.data);
+            setLoadError(null);
+            setIsForbidden(false);
+          } else {
+            setProjectData(null);
+            if (res.status === 403) {
+              setIsForbidden(true);
+              setLoadError(res.error || 'Access Forbidden: You are not authorized to view projects outside your assigned jurisdiction.');
+            } else {
+              setLoadError(res.error || `Project #${id} not found.`);
+            }
+          }
         }
       } catch (err) {
-        const fallback = projects.find((p) => String(p.projectId) === String(id)) || projects[0];
-        setProjectData(fallback);
+        if (isMounted) {
+          setProjectData(null);
+          setLoadError(err.message || 'Unable to load project details.');
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchDetail();
-  }, [id, projects]);
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
-  if (isLoading || !projectData) {
+  if (isLoading && !projectData && !loadError) {
     return (
       <PageContainer title="Loading Project Intelligence...">
         <div className="p-12 text-center text-slate-500 font-medium">
           <Cpu className="w-8 h-8 animate-spin mx-auto text-gov-700 mb-2" />
-          <p>AI model is analyzing project data...</p>
+          <p>Loading project details...</p>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (loadError || !projectData) {
+    return (
+      <PageContainer title={isForbidden ? "Access Restricted" : "Project Not Found"}>
+        <div className="bg-white p-8 rounded-xl border border-slate-200 text-center space-y-4 max-w-lg mx-auto mt-6">
+          <AlertTriangle className={`w-10 h-10 mx-auto ${isForbidden ? 'text-red-500' : 'text-amber-500'}`} />
+          <h3 className="text-base font-bold text-slate-900">
+            {isForbidden ? "Unauthorized Project Access" : (loadError || "Project Not Found")}
+          </h3>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            {isForbidden
+              ? `You do not have administrative authority to access Project #${id}. State Authorities may only access projects within their assigned state jurisdiction.`
+              : `The requested project ID #${id} could not be retrieved or does not exist.`}
+          </p>
+          <button
+            onClick={() => navigate('/projects')}
+            className="px-4 py-2 bg-gov-700 text-white rounded-lg text-xs font-bold hover:bg-gov-800 transition"
+          >
+            Back to Projects Directory
+          </button>
         </div>
       </PageContainer>
     );
@@ -79,23 +126,13 @@ export const ProjectDetails = () => {
       title={project.projectName}
       subtitle={`Project ID: #${project.projectId} • ${project.ministry} • ${project.sector} • ${project.state} (${project.district || 'Zone'})`}
       action={
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/projects')}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-sm transition"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
-            <span>Back to Projects</span>
-          </button>
-
-          <button
-            onClick={() => navigate('/what-if', { state: { project } })}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-gov-700 hover:bg-gov-800 rounded-lg shadow-sm transition"
-          >
-            <Sliders className="w-3.5 h-3.5 text-sky-300" />
-            <span>Simulate What-If</span>
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/projects')}
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-sm transition"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
+          <span>Back to Projects</span>
+        </button>
       }
     >
       {/* SECTION 1: AI-ASSISTED RISK ASSESSMENT HERO (Gauge + 3 Cards) */}
@@ -103,7 +140,7 @@ export const ProjectDetails = () => {
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-gov-700" />
+              <ShieldCheck className="w-3.5 h-3.5 text-gov-700" />
               AI-Assisted Risk Assessment
             </span>
             <span className="text-xs text-slate-400">•</span>
@@ -194,7 +231,7 @@ export const ProjectDetails = () => {
 
         {/* Secondary Regression & Cost Forecast Block */}
         {project.predictedCostOverrunCr && (
-          <div className="p-4 bg-gradient-to-r from-slate-900 to-gov-950 text-white rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4 border border-slate-800">
+          <div className="p-4 bg-slate-900 text-white rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4 border border-slate-800">
             <div>
               <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider block">
                 Predicted Cost Overrun (ML Regressor)

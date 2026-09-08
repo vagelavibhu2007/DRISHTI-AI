@@ -15,9 +15,11 @@ import {
 } from 'recharts';
 import { TrendingUp, Filter, Sparkles, Calendar, Layers, Building2, MapPin } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
+import { useDashboard } from '../context/DashboardContext';
 import { RISK_TREND_12M, SECTOR_RISK_DATA } from '../data/mockData';
 
 export const PredictionTrends = () => {
+  const { stats } = useDashboard();
   const [timePeriod, setTimePeriod] = useState('12M');
   const [selectedSector, setSelectedSector] = useState('ALL');
   const [selectedMinistry, setSelectedMinistry] = useState('ALL');
@@ -107,7 +109,7 @@ export const PredictionTrends = () => {
               <p className="text-xs text-slate-500">Historical & projected probability of budget escalation</p>
             </div>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-red-100 text-red-800 font-mono">
-              Avg 64.2%
+              Avg {stats?.averageCostRisk ?? '64.2'}%
             </span>
           </div>
           <div className="h-64 w-full">
@@ -131,7 +133,7 @@ export const PredictionTrends = () => {
               <p className="text-xs text-slate-500">Predicted schedule drift trajectory across quarters</p>
             </div>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-orange-100 text-orange-800 font-mono">
-              Avg 59.4%
+              Avg {stats?.averageTimeRisk ?? '59.4'}%
             </span>
           </div>
           <div className="h-64 w-full">
@@ -155,7 +157,7 @@ export const PredictionTrends = () => {
               <p className="text-xs text-slate-500">Macro hazard index progression (0 - 100)</p>
             </div>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-gov-100 text-gov-800 font-mono">
-              Baseline 61.8
+              Baseline {stats?.averageRiskScore ? Number(stats.averageRiskScore).toFixed(1) : '61.8'}
             </span>
           </div>
           <div className="h-64 w-full">
@@ -185,7 +187,7 @@ export const PredictionTrends = () => {
               <p className="text-xs text-slate-500">Number of assets crossing the critical ≥80 threshold</p>
             </div>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-red-100 text-red-800 font-mono">
-              Current: 410 Assets
+              Current: {(stats?.criticalProjects ?? 0).toLocaleString()} Assets
             </span>
           </div>
           <div className="h-64 w-full">

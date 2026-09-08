@@ -10,10 +10,12 @@ import {
   Legend
 } from 'recharts';
 import { TrendingUp } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { RISK_TREND_6M, RISK_TREND_12M } from '../../data/mockData';
 
 export const RiskTrend = () => {
   const [period, setPeriod] = useState('6M'); // '6M' or '12M'
+  const { isStateAuthority, assignedState } = useAuth();
   const data = period === '6M' ? RISK_TREND_6M : RISK_TREND_12M;
 
   const CustomTrendTooltip = ({ active, payload, label }) => {
@@ -49,7 +51,9 @@ export const RiskTrend = () => {
             Project Risk Trend
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Temporal progression of predictive risk indices across central pipeline
+            {isStateAuthority && assignedState
+              ? `Temporal progression of predictive risk indices across ${assignedState} projects`
+              : 'Temporal progression of predictive risk indices across central pipeline'}
           </p>
         </div>
 

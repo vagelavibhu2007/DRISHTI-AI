@@ -68,23 +68,23 @@ export const HighRiskProjects = () => {
       }
     >
       {/* Top Banner Alert */}
-      <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-r from-red-950 via-red-900 to-slate-900 text-white border border-red-700/50 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-xl bg-slate-900 text-white border border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-red-600/30 text-red-300 border border-red-500/30">
-            <Flame className="w-6 h-6" />
+          <div className="p-2.5 rounded-lg bg-red-950/80 text-red-400 border border-red-800/60">
+            <Flame className="w-5 h-5" />
           </div>
           <div>
             <h3 className="font-extrabold text-base tracking-tight text-white">
               Critical Escalation Tier (410 National Assets)
             </h3>
-            <p className="text-xs text-red-200 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               Identified by DRISHTI AI algorithm with &gt;80.0 combined cost and schedule hazard probability.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-auto">
-          <span className="text-xs font-mono font-bold px-3 py-1 rounded bg-red-500/20 text-red-300 border border-red-500/40">
+          <span className="text-xs font-mono font-bold px-3 py-1 rounded bg-red-950 text-red-300 border border-red-800/80">
             ₹ 11.42 Lakh Cr At-Risk
           </span>
         </div>

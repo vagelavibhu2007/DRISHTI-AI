@@ -1,10 +1,10 @@
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, status
 from typing import Optional
-from backend.data.project_repository import project_repository
+from backend.data.project_repository import project_repository, project_matches_state
 from backend.ml.explainer import shap_explainer
 from backend.models.user_model import User
-from backend.utils.dependencies import get_optional_current_user
+from backend.utils.dependencies import get_optional_current_user, get_user_authorized_state
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -23,12 +23,13 @@ def list_projects(
     """
     GET /api/projects
     Retrieves filtered and sorted infrastructure projects with ML risk scores.
-    If authenticated as a State Authority, enforces state filtering to user's assigned state.
+    If authenticated as a State Authority, strictly enforces state filtering to user's assigned state.
     """
     try:
-        # Enforce State Authority RBAC filter
-        if current_user and current_user.authority_type == "STATE_AUTHORITY" and current_user.state:
-            state = current_user.state
+        # Enforce State Authority RBAC filter (server-side security override)
+        auth_state = get_user_authorized_state(current_user)
+        if auth_state:
+            state = auth_state
 
         projects = project_repository.get_all(
             sort_by=sort_by,
@@ -48,14 +49,27 @@ def list_projects(
         raise HTTPException(status_code=500, detail=f"Error fetching projects: {str(e)}")
 
 @router.get("/{project_id}")
-def get_project_detail(project_id: str):
+def get_project_detail(
+    project_id: str,
+    current_user: Optional[User] = Depends(get_optional_current_user)
+):
     """
     GET /api/projects/{project_id}
     Retrieves comprehensive project record, ML risk assessments, and SHAP factors.
+    Strictly forbids access if State Authority attempts to view a project outside assigned state.
     """
     project = project_repository.get_by_id(project_id)
     if not project:
         raise HTTPException(status_code=404, detail=f"Project with ID #{project_id} not found in intelligence repository.")
+
+    # Server-side RBAC verification for State Authority
+    auth_state = get_user_authorized_state(current_user)
+    if auth_state:
+        if not project_matches_state(project.get("state", ""), auth_state):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access forbidden: Project #{project_id} does not belong to your authorized state jurisdiction ({auth_state})."
+            )
 
     # Compute live SHAP factors for this project
     df_feat = pd.DataFrame([{

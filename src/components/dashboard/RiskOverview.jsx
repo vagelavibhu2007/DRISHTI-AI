@@ -1,18 +1,59 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { RISK_DISTRIBUTION_DATA } from '../../data/mockData';
 import { useDashboard } from '../../context/DashboardContext';
+import { useAuth } from '../../context/AuthContext';
 import { ShieldAlert, ArrowRight } from 'lucide-react';
 
 export const RiskOverview = () => {
   const navigate = useNavigate();
-  const { setSelectedRiskFilter } = useDashboard();
+  const { stats, setSelectedRiskFilter } = useDashboard();
+  const { isStateAuthority, assignedState } = useAuth();
 
   const handleRiskFilterClick = (level) => {
     setSelectedRiskFilter(level);
     navigate('/projects');
   };
+
+  const total = stats?.totalProjects ?? 0;
+  const criticalVal = stats?.criticalProjects ?? 0;
+  const highVal = stats?.highRisk ?? 0;
+  const medVal = stats?.mediumRisk ?? 0;
+  const lowVal = stats?.lowRisk ?? 0;
+
+  const riskDistribution = [
+    {
+      name: 'Critical',
+      value: criticalVal,
+      percentage: total > 0 ? `${((criticalVal / total) * 100).toFixed(1)}%` : '0%',
+      color: '#EF4444',
+      level: 'CRITICAL',
+    },
+    {
+      name: 'High',
+      value: highVal,
+      percentage: total > 0 ? `${((highVal / total) * 100).toFixed(1)}%` : '0%',
+      color: '#F97316',
+      level: 'HIGH',
+    },
+    {
+      name: 'Medium',
+      value: medVal,
+      percentage: total > 0 ? `${((medVal / total) * 100).toFixed(1)}%` : '0%',
+      color: '#F59E0B',
+      level: 'MEDIUM',
+    },
+    {
+      name: 'Low',
+      value: lowVal,
+      percentage: total > 0 ? `${((lowVal / total) * 100).toFixed(1)}%` : '0%',
+      color: '#10B981',
+      level: 'LOW',
+    },
+  ];
+
+  const elevatedCount = criticalVal + highVal;
+  const elevatedPercentage = total > 0 ? ((elevatedCount / total) * 100).toFixed(1) : '0.0';
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -41,7 +82,9 @@ export const RiskOverview = () => {
             Overall Project Risk
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            National distribution across 1,966 central sector projects
+            {isStateAuthority && assignedState
+              ? `${assignedState} distribution across ${total.toLocaleString()} monitored projects`
+              : `National distribution across ${total.toLocaleString()} central sector projects`}
           </p>
         </div>
         <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -57,7 +100,7 @@ export const RiskOverview = () => {
             <RechartsPie>
               <Tooltip content={<CustomTooltip />} />
               <Pie
-                data={RISK_DISTRIBUTION_DATA}
+                data={riskDistribution}
                 cx="50%"
                 cy="50%"
                 innerRadius={62}
@@ -67,7 +110,7 @@ export const RiskOverview = () => {
                 cursor="pointer"
                 onClick={(entry) => handleRiskFilterClick(entry.level)}
               >
-                {RISK_DISTRIBUTION_DATA.map((entry, index) => (
+                {riskDistribution.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} stroke="#FFFFFF" strokeWidth={2} />
                 ))}
               </Pie>
@@ -76,7 +119,9 @@ export const RiskOverview = () => {
 
           {/* Center text in donut */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-2xl font-extrabold font-mono text-slate-900">1,966</span>
+            <span className="text-2xl font-extrabold font-mono text-slate-900">
+              {total.toLocaleString()}
+            </span>
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
               Total Projects
             </span>
@@ -89,7 +134,7 @@ export const RiskOverview = () => {
             Click level to filter projects:
           </span>
 
-          {RISK_DISTRIBUTION_DATA.map((item) => (
+          {riskDistribution.map((item) => (
             <div
               key={item.name}
               onClick={() => handleRiskFilterClick(item.level)}
@@ -118,12 +163,12 @@ export const RiskOverview = () => {
 
       {/* Footer Info */}
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-        <span>53.5% of monitored assets exhibit elevated risk</span>
+        <span>{elevatedPercentage}% of monitored assets exhibit elevated risk</span>
         <button
           onClick={() => navigate('/high-risk')}
           className="text-gov-700 font-bold hover:underline inline-flex items-center gap-1"
         >
-          View Priority 410 Assets →
+          View Priority {criticalVal.toLocaleString()} Assets →
         </button>
       </div>
     </div>

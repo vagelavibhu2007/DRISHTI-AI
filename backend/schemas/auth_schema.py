@@ -36,34 +36,29 @@ class UpdateProfileRequest(BaseModel):
     position: Optional[str] = None
 
 class ChangePasswordRequest(BaseModel):
-    current_password: str
-    current_password: Optional[str] = None
     old_password: Optional[str] = None
-    new_password: str
-    confirm_password: str
+    current_password: Optional[str] = None
+    new_password: str = Field(..., description="New secure password")
+    confirm_password: str = Field(..., description="Confirm new password")
 
     def get_old_password(self) -> str:
         return self.old_password or self.current_password or ""
 
 class ForgotPasswordRequest(BaseModel):
-    identifier: str = Field(..., description='Registered username or email address')
-    mobile_last4: Optional[str] = Field(None, description='Last 4 digits of registered mobile number for identity verification')
-    identifier: Optional[str] = None
-    email: Optional[str] = None
-    mobile_last4: Optional[str] = None
+    identifier: Optional[str] = Field(None, description="Registered username or email address")
+    email: Optional[str] = Field(None, description="Registered email address")
+    mobile_last4: Optional[str] = Field(None, description="Last 4 digits of registered mobile number")
 
     def get_identifier(self) -> str:
         return self.email or self.identifier or ""
 
 class ResetPasswordRequest(BaseModel):
-    identifier: str
-    reset_token: str
     identifier: Optional[str] = None
     email: Optional[str] = None
     reset_token: Optional[str] = None
     token: Optional[str] = None
-    new_password: str
-    confirm_password: str
+    new_password: str = Field(..., description="New password")
+    confirm_password: str = Field(..., description="Confirm new password")
 
     def get_token(self) -> str:
         return self.token or self.reset_token or ""

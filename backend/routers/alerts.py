@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, Depends
 from typing import Optional
 from backend.data.project_repository import project_repository
 from backend.models.user_model import User
-from backend.utils.dependencies import get_optional_current_user
+from backend.utils.dependencies import get_optional_current_user, get_user_authorized_state
 
 router = APIRouter(prefix="/alerts", tags=["Early Warning Alerts"])
 
@@ -18,10 +18,9 @@ def list_alerts(
     Retrieves dynamic AI-generated early warnings based on ML project risk probabilities.
     For State Authority, restricts alerts to projects involving their state.
     """
-    # Build alerts dynamically from high-risk projects
-    projects = project_repository.get_all(sort_by="overallRisk", sort_order="desc", limit=50)
-    if current_user and current_user.authority_type == "STATE_AUTHORITY" and current_user.state:
-        state = current_user.state
+    auth_state = get_user_authorized_state(current_user)
+    if auth_state:
+        state = auth_state
 
     # Build alerts dynamically from high-risk projects matching state
     projects = project_repository.get_all(sort_by="overallRisk", sort_order="desc", limit=50, state=state)

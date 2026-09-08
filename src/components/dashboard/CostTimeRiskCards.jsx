@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -9,10 +9,69 @@ import {
   Cell
 } from 'recharts';
 import { DollarSign, Clock, Sparkles } from 'lucide-react';
-import { COST_RISK_DISTRIBUTION, TIME_RISK_DISTRIBUTION, DASHBOARD_STATS } from '../../data/mockData';
+import { useDashboard } from '../../context/DashboardContext';
 
 export const CostTimeRiskCards = () => {
-  const CustomBarTooltip = ({ active, payload, label, prefix }) => {
+  const { stats, projects } = useDashboard();
+
+  const { costBins, timeBins, costSevere, timeSevere, avgCostRisk, avgTimeRisk } = useMemo(() => {
+    const list = Array.isArray(projects) ? projects : [];
+    const total = list.length;
+
+    const cBins = [
+      { range: '0-20%', count: 0, label: 'Minimal Risk' },
+      { range: '21-40%', count: 0, label: 'Low Risk' },
+      { range: '41-60%', count: 0, label: 'Moderate Risk' },
+      { range: '61-80%', count: 0, label: 'High Risk' },
+      { range: '81-100%', count: 0, label: 'Severe (81-100%)' },
+    ];
+
+    const tBins = [
+      { range: '0-20%', count: 0, label: 'On Schedule' },
+      { range: '21-40%', count: 0, label: 'Minor Delay' },
+      { range: '41-60%', count: 0, label: 'Moderate Delay' },
+      { range: '61-80%', count: 0, label: 'High Delay' },
+      { range: '81-100%', count: 0, label: 'Severe Delay' },
+    ];
+
+    let cSev = 0;
+    let tSev = 0;
+
+    list.forEach((p) => {
+      const cr = Number(p.costRisk ?? p.cost_risk ?? 0);
+      const tr = Number(p.timeRisk ?? p.time_risk ?? 0);
+
+      if (cr <= 20) cBins[0].count++;
+      else if (cr <= 40) cBins[1].count++;
+      else if (cr <= 60) cBins[2].count++;
+      else if (cr <= 80) cBins[3].count++;
+      else cBins[4].count++;
+
+      if (cr > 80) cSev++;
+
+      if (tr <= 20) tBins[0].count++;
+      else if (tr <= 40) tBins[1].count++;
+      else if (tr <= 60) tBins[2].count++;
+      else if (tr <= 80) tBins[3].count++;
+      else tBins[4].count++;
+
+      if (tr > 80) tSev++;
+    });
+
+    const cAvg = stats?.averageCostRisk ?? (total > 0 ? (list.reduce((acc, p) => acc + Number(p.costRisk || 0), 0) / total).toFixed(1) : 0);
+    const tAvg = stats?.averageTimeRisk ?? (total > 0 ? (list.reduce((acc, p) => acc + Number(p.timeRisk || 0), 0) / total).toFixed(1) : 0);
+
+    return {
+      costBins: cBins,
+      timeBins: tBins,
+      costSevere: cSev,
+      timeSevere: tSev,
+      avgCostRisk: cAvg,
+      avgTimeRisk: tAvg,
+    };
+  }, [projects, stats]);
+
+  const CustomBarTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-slate-900 text-white p-2.5 rounded-lg shadow-lg text-xs border border-slate-700">
@@ -46,13 +105,13 @@ export const CostTimeRiskCards = () => {
                 </span>
               </div>
             </div>
-            <span className="text-xs text-slate-400 font-mono">310 in severe zone</span>
+            <span className="text-xs text-slate-400 font-mono">{costSevere} in severe zone</span>
           </div>
 
           {/* Value Display */}
           <div className="flex items-baseline gap-3 my-2">
             <span className="text-3xl font-extrabold font-mono text-red-600 tracking-tight">
-              {DASHBOARD_STATS.averageCostRisk}%
+              {avgCostRisk}%
             </span>
             <span className="text-xs text-slate-500">Portfolio Average Probability</span>
           </div>
@@ -68,12 +127,12 @@ export const CostTimeRiskCards = () => {
           </span>
           <div className="h-28 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={COST_RISK_DISTRIBUTION} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+              <BarChart data={costBins} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                 <XAxis dataKey="range" tick={{ fontSize: 10, fill: '#64748B' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 9, fill: '#64748B' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomBarTooltip prefix="Cost Risk" />} />
+                <Tooltip content={<CustomBarTooltip />} />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {COST_RISK_DISTRIBUTION.map((entry, index) => (
+                  {costBins.map((entry, index) => (
                     <Cell
                       key={`cost-cell-${index}`}
                       fill={index >= 3 ? '#EF4444' : index === 2 ? '#F59E0B' : '#3B82F6'}
@@ -104,13 +163,13 @@ export const CostTimeRiskCards = () => {
                 </span>
               </div>
             </div>
-            <span className="text-xs text-slate-400 font-mono">300 in severe zone</span>
+            <span className="text-xs text-slate-400 font-mono">{timeSevere} in severe zone</span>
           </div>
 
           {/* Value Display */}
           <div className="flex items-baseline gap-3 my-2">
             <span className="text-3xl font-extrabold font-mono text-orange-600 tracking-tight">
-              {DASHBOARD_STATS.averageTimeRisk}%
+              {avgTimeRisk}%
             </span>
             <span className="text-xs text-slate-500">Portfolio Average Probability</span>
           </div>
@@ -126,12 +185,12 @@ export const CostTimeRiskCards = () => {
           </span>
           <div className="h-28 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={TIME_RISK_DISTRIBUTION} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+              <BarChart data={timeBins} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                 <XAxis dataKey="range" tick={{ fontSize: 10, fill: '#64748B' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 9, fill: '#64748B' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomBarTooltip prefix="Time Risk" />} />
+                <Tooltip content={<CustomBarTooltip />} />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {TIME_RISK_DISTRIBUTION.map((entry, index) => (
+                  {timeBins.map((entry, index) => (
                     <Cell
                       key={`time-cell-${index}`}
                       fill={index >= 3 ? '#F97316' : index === 2 ? '#F59E0B' : '#3B82F6'}

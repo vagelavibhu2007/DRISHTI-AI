@@ -79,8 +79,6 @@ class ProjectRepository:
                 "projectName": "Relining of Rajasthan Feeder and Sirhind Feeder",
                 "ministry": "Ministry of Jal Shakti",
                 "sector": "Water Resources",
-                "state": "Punjab",
-                "district": "Ferozepur / Muktsar",
                 "state": "Punjab, Rajasthan",
                 "district": "Ferozepur / Muktsar / Sri Ganganagar",
                 "originalCost": 1976.4,
@@ -126,8 +124,6 @@ class ProjectRepository:
                 "projectName": "Durgapur-Haldia Pipeline Phase II",
                 "ministry": "Ministry of Petroleum & Natural Gas",
                 "sector": "Petroleum & Gas",
-                "state": "West Bengal",
-                "district": "Purba Medinipur / Paschim Bardhaman",
                 "state": "West Bengal, Jharkhand",
                 "district": "Purba Medinipur / Paschim Bardhaman / Dhanbad",
                 "originalCost": 2850.0,
@@ -143,8 +139,6 @@ class ProjectRepository:
                 "projectName": "Delhi-Amritsar-Katra Expressway Phase-I",
                 "ministry": "Ministry of Road Transport & Highways",
                 "sector": "Road Transport",
-                "state": "Haryana",
-                "district": "Jhajjar / Rohtak / Jind",
                 "state": "Delhi, Haryana, Punjab, Jammu and Kashmir",
                 "district": "Jhajjar / Rohtak / Jind / Ludhiana",
                 "originalCost": 15400.0,
@@ -316,7 +310,6 @@ class ProjectRepository:
         if sector and sector != "ALL":
             results = [p for p in results if p["sector"] == sector]
         if state and state != "ALL":
-            results = [p for p in results if p["state"] == state]
             results = [p for p in results if project_matches_state(p.get("state", ""), state)]
         if search and search.strip():
             q = search.strip().lower()
@@ -379,44 +372,23 @@ class ProjectRepository:
         total_val = round(sum(p["originalCost"] for p in projects), 1)
         at_risk_val = round(sum(p["originalCost"] for p in projects if p["riskLevel"] in ["CRITICAL", "HIGH"]), 1)
 
-        if state and state != "ALL":
-            return {
-                "totalProjects": total,
-                "monitoredProjects": total,
-                "criticalProjects": critical,
-                "highRisk": high,
-                "mediumRisk": medium,
-                "lowRisk": low,
-                "averageRiskScore": avg_risk,
-                "averageCostRisk": avg_cost_risk,
-                "averageTimeRisk": avg_time_risk,
-                "lastUpdated": "05 September 2026",
-                "totalMonitoredValueCr": total_val,
-                "atRiskCapitalValueCr": at_risk_val,
-                "totalActiveAlerts": critical + (high // 2),
-                "resolvedAlertsMonth": max(1, medium // 2),
-                "aiConfidenceIndex": 94.6,
-                "state": state
-            }
-
-        # Scale up to portfolio numbers for national representation
         return {
-            "totalProjects": 1966,
+            "totalProjects": total,
             "monitoredProjects": total,
-            "criticalProjects": 410,
-            "highRisk": 640,
-            "mediumRisk": 595,
-            "lowRisk": 320,
+            "criticalProjects": critical,
+            "highRisk": high,
+            "mediumRisk": medium,
+            "lowRisk": low,
             "averageRiskScore": avg_risk,
             "averageCostRisk": avg_cost_risk,
             "averageTimeRisk": avg_time_risk,
             "lastUpdated": "05 September 2026",
-            "totalMonitoredValueCr": 2486750.0,
-            "atRiskCapitalValueCr": 1142800.0,
-            "totalActiveAlerts": 84,
-            "resolvedAlertsMonth": 28,
+            "totalMonitoredValueCr": total_val,
+            "atRiskCapitalValueCr": at_risk_val,
+            "totalActiveAlerts": critical + (high // 2),
+            "resolvedAlertsMonth": max(1, medium // 2),
             "aiConfidenceIndex": 94.6,
-            "state": None
+            "state": state if (state and state != "ALL") else None
         }
 
 project_repository = ProjectRepository()
