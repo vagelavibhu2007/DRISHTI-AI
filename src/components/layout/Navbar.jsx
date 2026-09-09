@@ -13,14 +13,24 @@ import {
   Settings,
   ChevronDown,
   Building2,
-  MapPin
+  MapPin,
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
 import { useAuth } from '../../context/AuthContext';
 import { RiskBadge } from '../common/RiskBadge';
 
 export const Navbar = () => {
-  const { stats, alerts, searchQuery, setSearchQuery, setIsSettingsOpen } = useDashboard();
+  const {
+    stats,
+    alerts,
+    searchQuery,
+    setSearchQuery,
+    setIsSettingsOpen,
+    sidebarCollapsed,
+    toggleSidebar
+  } = useDashboard();
   const { user, logout, isCentralAuthority, isStateAuthority } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -43,8 +53,21 @@ export const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/90 shadow-sm flex items-center justify-between px-4 sm:px-6">
-      {/* Left Area: Govt Badge & Search */}
-      <div className="flex items-center gap-4 flex-1 max-w-xl">
+      {/* Left Area: Sidebar Toggle, Govt Badge & Search */}
+      <div className="flex items-center gap-3 flex-1 max-w-xl">
+        <button
+          onClick={toggleSidebar}
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition focus:outline-none"
+          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {sidebarCollapsed ? (
+            <PanelLeft className="w-5 h-5 text-gov-700" />
+          ) : (
+            <PanelLeftClose className="w-5 h-5 text-slate-600" />
+          )}
+        </button>
+
         {/* National Emblem stylized tag */}
         <div className="hidden lg:flex items-center gap-2 pl-1 pr-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700">
           <div className="w-5 h-5 rounded bg-gov-700 text-white flex items-center justify-center font-bold text-[10px]">
