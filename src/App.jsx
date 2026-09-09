@@ -5,6 +5,7 @@ import Navbar from './components/layout/Navbar';
 import { QuickProjectDrawer } from './components/common/QuickProjectDrawer';
 import { SettingsModal, HelpModal } from './components/layout/SystemModals';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // Pages
 // Auth Pages
@@ -54,108 +55,109 @@ const AuthenticatedLayout = ({ children }) => {
 
 export const App = () => {
   return (
-    <Routes>
-      {/* Public Authentication Routes */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* Public Authentication Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* Protected Infrastructure Intelligence Routes */}
-      <Route
-        path="/"
-        element={
-          <AuthenticatedLayout>
-            <Dashboard />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <AuthenticatedLayout>
-            <Dashboard />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/projects"
-        element={
-          <AuthenticatedLayout>
-            <Projects />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/projects/:id"
-        element={
-          <AuthenticatedLayout>
-            <ProjectDetails />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/risk-analytics"
-        element={
-          <AuthenticatedLayout>
-            <RiskAnalytics />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/high-risk"
-        element={
-          <AuthenticatedLayout>
-            <HighRiskProjects />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/trends"
-        element={
-          <AuthenticatedLayout>
-            <PredictionTrends />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/map"
-        element={
-          <AuthenticatedLayout>
-            <GeographicRisk />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/alerts"
-        element={
-          <AuthenticatedLayout>
-            <Alerts />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/reports"
-        element={
-          <AuthenticatedLayout>
-            <Reports />
-          </AuthenticatedLayout>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <AuthenticatedLayout>
-            <Profile />
-          </AuthenticatedLayout>
-        }
-      />
+        {/* Protected Infrastructure Intelligence Routes */}
+        <Route
+          path="/"
+          element={
+            <AuthenticatedLayout>
+              <Dashboard />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <AuthenticatedLayout>
+              <Dashboard />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <AuthenticatedLayout>
+              <Projects />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/projects/:id"
+          element={
+            <AuthenticatedLayout>
+              <ProjectDetails />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/risk-analytics"
+          element={
+            <AuthenticatedLayout>
+              <RiskAnalytics />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/high-risk"
+          element={
+            <AuthenticatedLayout>
+              <HighRiskProjects />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/trends"
+          element={
+            <AuthenticatedLayout>
+              <PredictionTrends />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/map"
+          element={
+            <AuthenticatedLayout>
+              <GeographicRisk />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/alerts"
+          element={
+            <AuthenticatedLayout>
+              <Alerts />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <AuthenticatedLayout>
+              <Reports />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <AuthenticatedLayout>
+              <Profile />
+            </AuthenticatedLayout>
+          }
+        />
 
-      {/* Catch-all fallback */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+        {/* Catch-all fallback */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </>
   );
 };
 
 export default App;
-
-

@@ -129,8 +129,8 @@ TARGET REVIEW: ${brief.targetAudience}
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
-      <div className="bg-slate-50 rounded-2xl shadow-2xl border border-slate-700 max-w-5xl w-full max-h-[94vh] flex flex-col overflow-hidden my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-y-auto">
+      <div className="bg-slate-50 rounded-2xl shadow-2xl border border-slate-700 max-w-5xl w-full max-h-[94vh] flex flex-col overflow-hidden my-auto animate-scale-in">
         
         {/* Top Floating Control Bar (Hidden during PDF print) */}
         <div className="px-6 py-3.5 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 print:hidden select-none">
