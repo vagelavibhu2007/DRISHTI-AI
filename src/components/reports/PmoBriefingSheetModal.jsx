@@ -30,21 +30,43 @@ import { generatePmoBriefData, exportPmoBriefToCSV, formatCurrency, formatPercen
 export const PmoBriefingSheetModal = ({
   project,
   projectsList = [],
+  filterCriticalOnly = false,
+  autoPrint = false,
   onClose,
   onSelectProject
 }) => {
-  const [selectedProjectId, setSelectedProjectId] = useState(project?.projectId || projectsList[0]?.projectId);
+  const displayList = filterCriticalOnly
+    ? projectsList.filter((p) => p.riskLevel === 'CRITICAL' || p.overallRisk >= 75)
+    : projectsList;
+
+  const initialProject = project || displayList[0] || projectsList[0];
+  const [selectedProjectId, setSelectedProjectId] = useState(initialProject?.projectId);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState('full'); // 'full', 'financial', 'bottlenecks'
   const printRef = useRef(null);
 
+  React.useEffect(() => {
+    if (project?.projectId) {
+      setSelectedProjectId(project.projectId);
+    }
+  }, [project]);
+
+  React.useEffect(() => {
+    if (autoPrint) {
+      const timer = setTimeout(() => {
+        window.print();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [autoPrint]);
+
   // Find active project
-  const currentProject = projectsList.find((p) => String(p.projectId) === String(selectedProjectId)) || project || projectsList[0];
+  const currentProject = projectsList.find((p) => String(p.projectId) === String(selectedProjectId)) || initialProject;
   const brief = generatePmoBriefData(currentProject);
 
   if (!brief) return null;
 
   const riskTheme = getRiskColor(brief.riskLevel || brief.overallRisk);
+
 
   const handleCopyText = () => {
     const textContent = `================================================================================
@@ -132,7 +154,7 @@ TARGET REVIEW: ${brief.targetAudience}
 
           <div className="flex items-center gap-2">
             {/* Project Switcher */}
-            {projectsList.length > 1 && (
+            {displayList.length > 1 && (
               <div className="relative">
                 <select
                   value={selectedProjectId}
@@ -142,7 +164,7 @@ TARGET REVIEW: ${brief.targetAudience}
                   }}
                   className="bg-slate-800 hover:bg-slate-750 text-slate-100 text-xs font-semibold rounded-xl pl-3 pr-8 py-2 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer appearance-none max-w-[200px] sm:max-w-[280px] truncate shadow-inner"
                 >
-                  {projectsList.map((p) => (
+                  {displayList.map((p) => (
                     <option key={p.projectId} value={p.projectId}>
                       #{p.projectId} - {p.projectName}
                     </option>
