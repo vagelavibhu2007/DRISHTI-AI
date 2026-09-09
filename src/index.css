@@ -102,6 +102,27 @@
 }
 
 /* ==========================================================================
+   LEAFLET MARKER CLUSTER & SPIDERFY GOVERNMENT THEME STYLING
+   ========================================================================== */
+.leaflet-cluster-anim .leaflet-marker-icon,
+.leaflet-cluster-anim .leaflet-marker-shadow {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-in;
+}
+
+.leaflet-cluster-spider-leg {
+  stroke: #64748B !important;
+  stroke-width: 1.5 !important;
+  stroke-dasharray: 4, 4 !important;
+  opacity: 0.85 !important;
+}
+
+.drishti-cluster-marker {
+  background: transparent;
+  border: none;
+}
+
+
+/* ==========================================================================
    OFFICIAL PMO BRIEFING SHEET - PRINT & PDF EXPORT STYLES (STRICT ISOLATION)
    ========================================================================== */
 @media print {
