@@ -60,35 +60,20 @@ const ProjectClusterLayer = ({
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       spiderfyOnMaxZoom: true,
-      spiderfyDistanceMultiplier: 1.6,
-      maxClusterRadius: 36,
-      disableClusteringAtZoom: 12,
+      spiderfyDistanceMultiplier: 1.5,
+      maxClusterRadius: 32,
+      disableClusteringAtZoom: 10,
       chunkedLoading: true,
       chunkInterval: 50,
       chunkDelay: 15,
       iconCreateFunction: (cluster) => {
-        const markers = cluster.getAllChildMarkers();
-        const count = markers.length;
-        const hasCritical = markers.some((m) => m.options?.riskLevel === 'CRITICAL');
-        const hasHigh = markers.some((m) => m.options?.riskLevel === 'HIGH');
+        const count = cluster.getChildCount();
+        const size = count > 99 ? 28 : count > 9 ? 26 : 24;
 
-        // Compact, subtle, executive badge with refined risk accent
-        let borderClass = 'border-slate-400/80';
-        let indicatorHtml = '';
-        if (hasCritical) {
-          borderClass = 'border-red-500 ring-2 ring-red-400/20';
-          indicatorHtml = `<span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 border border-white"></span>`;
-        } else if (hasHigh) {
-          borderClass = 'border-orange-500 ring-2 ring-orange-400/20';
-          indicatorHtml = `<span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-500 border border-white"></span>`;
-        }
-
-        const size = count > 99 ? 32 : count > 9 ? 28 : 26;
-
+        // Subtle, neutral, executive cluster indicator
         return L.divIcon({
-          html: `<div style="width: ${size}px; height: ${size}px;" class="relative bg-slate-900/90 ${borderClass} border text-white rounded-full flex items-center justify-center font-bold font-mono text-[11px] shadow-md transition-transform hover:scale-105 select-none">
+          html: `<div style="width: ${size}px; height: ${size}px;" class="bg-slate-900/90 border border-slate-500/80 text-white rounded-full flex items-center justify-center font-bold font-mono text-[10px] shadow-sm transition-transform hover:scale-105 select-none">
                   <span>${count}</span>
-                  ${indicatorHtml}
                 </div>`,
           className: 'drishti-cluster-marker',
           iconSize: L.point(size, size),
@@ -104,25 +89,25 @@ const ProjectClusterLayer = ({
       const isHigh = p.riskLevel === 'HIGH';
       const isMed = p.riskLevel === 'MEDIUM';
 
-      // Restored previous authentic small circular risk dots
+      // Authentic small circular risk dots (sharp, clean, executive)
       let pinColor = '#10B981'; // Green (Low)
-      let markerRadius = 6;
+      let markerRadius = 5;
       if (isCrit) {
         pinColor = '#EF4444'; // Red (Critical)
-        markerRadius = 7.5;
+        markerRadius = 6;
       } else if (isHigh) {
         pinColor = '#F97316'; // Orange (High)
-        markerRadius = 7;
+        markerRadius = 5.5;
       } else if (isMed) {
         pinColor = '#F59E0B'; // Amber (Medium)
-        markerRadius = 6;
+        markerRadius = 5;
       }
 
       const marker = L.circleMarker([p.geoLat, p.geoLng], {
         radius: markerRadius,
         fillColor: pinColor,
         color: '#FFFFFF',
-        weight: 2,
+        weight: 1.5,
         opacity: 1,
         fillOpacity: 0.95,
         riskLevel: p.riskLevel
