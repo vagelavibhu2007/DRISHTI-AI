@@ -157,7 +157,7 @@ export const ProjectDetails = () => {
       }
     >
       {/* SECTION 1: AI-ASSISTED RISK ASSESSMENT HERO (Gauge + 3 Cards) */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-card space-y-6">
+      <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-card space-y-6 animate-fade-in-up">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
@@ -287,7 +287,7 @@ export const ProjectDetails = () => {
       </div>
 
       {/* SECTION 2: PROJECT PERFORMANCE */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-card space-y-6">
+      <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-card space-y-6 animate-fade-in-up delay-75">
         <div>
           <h3 className="text-base font-bold text-slate-900">Project Performance & Milestones</h3>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -387,14 +387,16 @@ export const ProjectDetails = () => {
       </div>
 
       {/* SECTION 3: "WHY IS THIS PROJECT RISKY?" (SHAP Explainable AI) */}
-      <ShapContributionBars
-        factors={project.shapFactors}
-        projectName={project.projectName}
-      />
+      <div className="animate-fade-in-up delay-150">
+        <ShapContributionBars
+          factors={project.shapFactors}
+          projectName={project.projectName}
+        />
+      </div>
 
       {/* SECTION 4: ASSOCIATED EARLY WARNING ALERTS */}
       {relatedAlerts.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-3 animate-fade-in-up delay-200">
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-red-600" />
             Active Early Warnings for this Project ({relatedAlerts.length})
