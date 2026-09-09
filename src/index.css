@@ -107,7 +107,7 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 6mm;
   }
 
   *, *:before, *:after {
@@ -129,8 +129,8 @@
 
   body {
     background: #FFFFFF !important;
-    color: #000000 !important;
-    font-size: 11pt !important;
+    color: #0F172A !important;
+    font-size: 10.5pt !important;
     line-height: 1.35 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -145,48 +145,29 @@
     overflow: visible !important;
   }
 
-  .bg-white.rounded-2xl {
+  .bg-slate-50.rounded-2xl {
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     max-width: 100% !important;
     width: 100% !important;
+    background: #FFFFFF !important;
   }
 
   .pmo-print-sheet {
     width: 100% !important;
     max-width: 100% !important;
-    border: 2px solid #000000 !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
     margin: 0 !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
   }
 
   .pmo-print-sheet * {
     visibility: visible !important;
   }
-
-  /* Force background colors on specific table sections */
-  .bg-\[\#E65100\] {
-    background-color: #E65100 !important;
-    color: #FFFFFF !important;
-  }
-
-  .bg-\[\#FED7AA\] {
-    background-color: #FED7AA !important;
-    color: #000000 !important;
-  }
-
-  .bg-\[\#EFF6FF\] {
-    background-color: #EFF6FF !important;
-    color: #000000 !important;
-  }
-
-  .border-black {
-    border-color: #000000 !important;
-  }
 }
+
 
 
 
