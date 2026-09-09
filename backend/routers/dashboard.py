@@ -83,52 +83,26 @@ def get_risk_distribution(
 @router.get("/risk/trends")
 def get_risk_trends(
     state: Optional[str] = Query(None, description="Optional State filter"),
+    sector: Optional[str] = Query(None, description="Optional Sector filter"),
+    ministry: Optional[str] = Query(None, description="Optional Ministry filter"),
+    horizon: Optional[str] = Query("12M", description="Time horizon (6M, 12M, 24M Forecast)"),
     current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """
     GET /api/risk/trends
     Longitudinal historical & projected risk trends.
+    Longitudinal historical & projected risk trends filtered dynamically by
+    State (enforcing State Authority RBAC), Sector, Ministry, and Horizon.
     """
     auth_state = get_user_authorized_state(current_user)
     if auth_state:
         state = auth_state
 
-    summary = project_repository.get_kpi_summary(state=state)
-    avg_r = summary["averageRiskScore"] or 58.0
-    avg_c = summary["averageCostRisk"] or 60.0
-    avg_t = summary["averageTimeRisk"] or 56.0
-    crit_c = summary["criticalProjects"]
-
-    months_6 = ["Mar 2026", "Apr 2026", "May 2026", "Jun 2026", "Jul 2026", "Aug 2026"]
-    deltas = [-3.6, -2.4, -1.0, 0.6, 0.1, 0.0]
-
-    trends_6m = [
-        {
-            "month": m,
-            "overallRisk": round(max(5.0, min(98.0, avg_r + d)), 1),
-            "costRisk": round(max(5.0, min(98.0, avg_c + d * 1.05)), 1),
-            "timeRisk": round(max(5.0, min(98.0, avg_t + d * 0.95)), 1),
-            "criticalCount": max(0, int(crit_c + d * 2))
-        }
-        for m, d in zip(months_6, deltas)
-    ]
-
-    months_prev = ["Sep 2025", "Oct 2025", "Nov 2025", "Dec 2025", "Jan 2026", "Feb 2026"]
-    prev_deltas = [-7.7, -6.9, -6.2, -5.0, -4.5, -3.9]
-    trends_12m = [
-        {
-            "month": m,
-            "overallRisk": round(max(5.0, min(98.0, avg_r + d)), 1),
-            "costRisk": round(max(5.0, min(98.0, avg_c + d * 1.05)), 1),
-            "timeRisk": round(max(5.0, min(98.0, avg_t + d * 0.95)), 1),
-            "criticalCount": max(0, int(crit_c + d * 2))
-        }
-        for m, d in zip(months_prev, prev_deltas)
-    ] + trends_6m
-
-    return {
-        "trends6M": trends_6m,
-        "trends12M": trends_12m
-    }
+    return project_repository.get_risk_trends(
+        state=state,
+        sector=sector,
+        ministry=ministry,
+        horizon=horizon
+    )
 
 

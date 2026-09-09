@@ -131,6 +131,17 @@ export const api = {
     }
   },
 
+  // 3b. Longitudinal Risk & Prediction Trends
+  getRiskTrends: async (params = {}) => {
+    try {
+      const response = await apiClient.get('/risk/trends', { params });
+      return { success: true, data: response.data, source: 'API' };
+    } catch (error) {
+      console.warn('API /risk/trends unreachable:', error.message);
+      return { success: false, error: error.message };
+    }
+  },
+
   // 4. Projects Listing with Filters
   getProjects: async (params = {}) => {
     try {
