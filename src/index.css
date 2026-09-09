@@ -101,5 +101,93 @@
   border-top-color: #0F172A !important;
 }
 
+/* ==========================================================================
+   OFFICIAL PMO BRIEFING SHEET - PRINT & PDF EXPORT STYLES
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  *, *:before, *:after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Hide app navigation, sidebar, toast notifications, and modal controls */
+  header,
+  nav,
+  aside,
+  .print\:hidden,
+  button,
+  .toast,
+  .fixed.bottom-6 {
+    display: none !important;
+  }
+
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    line-height: 1.35 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Modal container overrides for print */
+  .fixed.inset-0 {
+    position: static !important;
+    padding: 0 !important;
+    background: transparent !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .bg-white.rounded-2xl {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .pmo-print-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: 2px solid #000000 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .pmo-print-sheet * {
+    visibility: visible !important;
+  }
+
+  /* Force background colors on specific table sections */
+  .bg-\[\#E65100\] {
+    background-color: #E65100 !important;
+    color: #FFFFFF !important;
+  }
+
+  .bg-\[\#FED7AA\] {
+    background-color: #FED7AA !important;
+    color: #000000 !important;
+  }
+
+  .bg-\[\#EFF6FF\] {
+    background-color: #EFF6FF !important;
+    color: #000000 !important;
+  }
+
+  .border-black {
+    border-color: #000000 !important;
+  }
+}
+
+
 
 

@@ -667,6 +667,17 @@ There are **186 projects** where expenditure exceeds 70% but physical progress r
 
 export const REPORTS_LIST = [
   {
+    id: 'REP-2026-PMO-00',
+    title: 'PMO Infrastructure Briefing Dossier (Inter-Ministerial)',
+    category: 'PMO Executive Brief',
+    description: 'Standard 2-tone PMO executive briefing sheets with SHAP root cause bottlenecks, fiscal divergence, and directives.',
+    generatedDate: '09 Sep 2026',
+    fileSize: '5.2 MB',
+    format: 'PDF / CSV',
+    badge: 'PMO Standard',
+    isPmoBrief: true
+  },
+  {
     id: 'REP-2026-Q3-01',
     title: 'National Infrastructure Risk Assessment - Q3 2026',
     category: 'Executive Summary',
@@ -684,7 +695,8 @@ export const REPORTS_LIST = [
     generatedDate: '03 Sep 2026',
     fileSize: '12.4 MB',
     format: 'PDF',
-    badge: 'Critical'
+    badge: 'Critical',
+    isPmoBrief: true
   },
   {
     id: 'REP-2026-GEO-03',
@@ -717,4 +729,5 @@ export const REPORTS_LIST = [
     badge: 'Sector'
   }
 ];
+
 
