@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
 import { useAuth } from '../../context/AuthContext';
+import { resolveProjectLocation } from '../../data/canonicalLocations';
 
 // Helper component to smoothly animate map viewport on state selection
 const MapViewportController = ({ selectedState, stateStats }) => {
@@ -156,39 +157,70 @@ export const IndiaRiskMap = () => {
     });
   }, [allProjects, selectedState, selectedSector, selectedRisk]);
 
-  // Project marker geographic coordinates [lat, lng]
+  // Project marker geographic coordinates [lat, lng] resolved via canonical locations + micro-separation for co-located points
   const projectMarkers = useMemo(() => {
-    return filteredMapProjects.map((p, idx) => {
-      const pStates = extractProjectStates(p.state);
-      const primaryState = pStates[0] || p.state || 'Maharashtra';
-      const stateObj = INDIA_STATE_PATHS.find(
-        (s) =>
-          s.name.toLowerCase() === primaryState.toLowerCase() ||
-          normalizeStateName(s.name).toLowerCase() === normalizeStateName(primaryState).toLowerCase()
-      );
+    // 1. Group projects by resolved base anchor coordinate
+    const coordGroups = new Map();
 
-      let lat, lng;
-      if (p.lat && p.lng) {
-        lat = Number(p.lat);
-        lng = Number(p.lng);
-      } else if (stateObj && stateObj.lonLatCentroid) {
-        const [stateLon, stateLat] = stateObj.lonLatCentroid;
-        // Deterministic geographic offset dispersion across state area
-        const angle = (idx * 137.5 * Math.PI) / 180;
-        const radius = 0.2 + (idx % 6) * 0.18; // approx 20km to 80km
-        lat = Number((stateLat + Math.sin(angle) * radius).toFixed(4));
-        lng = Number((stateLon + Math.cos(angle) * radius).toFixed(4));
-      } else {
-        lat = 20.5937 + (idx % 5) * 0.4;
-        lng = 78.9629 + (idx % 5) * 0.4;
+    filteredMapProjects.forEach((p) => {
+      const loc = resolveProjectLocation(p);
+      const baseLat = loc.lat;
+      const baseLng = loc.lng;
+      const key = `${baseLat.toFixed(4)},${baseLng.toFixed(4)}`;
+
+      if (!coordGroups.has(key)) {
+        coordGroups.set(key, { baseLat, baseLng, list: [] });
+      }
+      coordGroups.get(key).list.push({ ...p, _locMeta: loc });
+    });
+
+    // 2. Separate co-located points with a tight, sub-kilometer visual dispersion
+    const result = [];
+
+    coordGroups.forEach(({ baseLat, baseLng, list }) => {
+      const sorted = [...list].sort((a, b) => String(a.projectId).localeCompare(String(b.projectId)));
+      const count = sorted.length;
+
+      if (count === 1) {
+        result.push({
+          ...sorted[0],
+          geoLat: baseLat,
+          geoLng: baseLng,
+          locationLabel: sorted[0]._locMeta.locationLabel,
+          precision: sorted[0]._locMeta.precision
+        });
+        return;
       }
 
-      return {
-        ...p,
-        geoLat: lat,
-        geoLng: lng
-      };
+      // Microscopic circular fan-out (~300m - 800m) to keep points within the exact city/site
+      const latCos = Math.cos((baseLat * Math.PI) / 180) || 1;
+      let placed = 0;
+      let ringIdx = 1;
+
+      while (placed < count) {
+        const ringCapacity = ringIdx * 6;
+        const countInRing = Math.min(ringCapacity, count - placed);
+        const r = 0.0030 * ringIdx; // ~330m per ring
+
+        for (let i = 0; i < countInRing; i++) {
+          const angle = (2 * Math.PI * i) / ringCapacity;
+          const latOffset = r * Math.sin(angle);
+          const lngOffset = (r * Math.cos(angle)) / latCos;
+
+          result.push({
+            ...sorted[placed],
+            geoLat: Number((baseLat + latOffset).toFixed(5)),
+            geoLng: Number((baseLng + lngOffset).toFixed(5)),
+            locationLabel: sorted[placed]._locMeta.locationLabel,
+            precision: sorted[placed]._locMeta.precision
+          });
+          placed++;
+        }
+        ringIdx++;
+      }
     });
+
+    return result;
   }, [filteredMapProjects]);
 
   // Active state data for the side profile (dynamically synced with hovered project, selected project, or state selection)
