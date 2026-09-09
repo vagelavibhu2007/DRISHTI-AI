@@ -14,7 +14,6 @@ import {
   EyeOff,
   AlertCircle,
   FileText,
-  Camera,
   Sparkles,
   MapPin,
   Check,
@@ -34,11 +33,10 @@ const INDIAN_STATES_AND_UTS = [
 ];
 
 const ID_PROOF_TYPES = [
-  'Aadhaar Card',
-  'PAN Card',
-  'Voter ID Card',
-  'Passport',
-  'Government / Service ID Card'
+  'Government ID',
+  'Official Service / Employee ID Card',
+  'Departmental ID Card',
+  'Other Statutory Government ID'
 ];
 
 const DESIGNATIONS = [
@@ -70,10 +68,9 @@ export const Register = () => {
     customPosition: '',
     state: 'Maharashtra',
     // Step 3
-    idProofType: 'Aadhaar Card',
+    idProofType: 'Government ID',
     idProofNumber: '',
     idProofFile: null,
-    profilePhotoFile: null,
     // Step 4
     username: '',
     password: '',
@@ -82,7 +79,6 @@ export const Register = () => {
     declarationAccepted: false,
   });
 
-  const [profilePreview, setProfilePreview] = useState(null);
   const [idFilePreviewName, setIdFilePreviewName] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -96,20 +92,6 @@ export const Register = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
-    }
-  };
-
-  // Profile photo file select
-  const handleProfilePhotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors((prev) => ({ ...prev, profilePhoto: 'Photo must be under 5MB.' }));
-        return;
-      }
-      setFormData((prev) => ({ ...prev, profilePhotoFile: file }));
-      setProfilePreview(URL.createObjectURL(file));
-      setErrors((prev) => ({ ...prev, profilePhoto: null }));
     }
   };
 
@@ -284,10 +266,6 @@ export const Register = () => {
       formPayload.append('id_proof_type', formData.idProofType);
       formPayload.append('id_proof_number', formData.idProofNumber.trim());
       formPayload.append('id_proof_file', formData.idProofFile);
-
-      if (formData.profilePhotoFile) {
-        formPayload.append('profile_photo', formData.profilePhotoFile);
-      }
 
       formPayload.append('username', formData.username.trim().toLowerCase());
       formPayload.append('password', formData.password);
@@ -650,17 +628,17 @@ export const Register = () => {
               <div className="border-b border-slate-800 pb-3">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <FileCheck2 className="w-5 h-5 text-sky-400" />
-                  <span>Step 3: Identity Verification & Documents</span>
+                  <span>Step 3: Government ID & Verification Document</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  Upload official identity documents for statutory verification.
+                  Provide your official Government ID details and upload document for statutory verification.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Identity Proof Document Type <span className="text-red-400">*</span>
+                    Government ID Type <span className="text-red-400">*</span>
                   </label>
                   <select
                     value={formData.idProofType}
@@ -677,13 +655,13 @@ export const Register = () => {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Identity Document Number <span className="text-red-400">*</span>
+                    Government ID Number <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.idProofNumber}
                     onChange={(e) => handleChange('idProofNumber', e.target.value)}
-                    placeholder="e.g. 5432 1098 7654 or GOV-ID-8812"
+                    placeholder="e.g. GOV-ID-8812 or 5432109876"
                     className="w-full px-3.5 py-2.5 bg-slate-950/70 border border-slate-700 focus:border-sky-500 rounded-xl text-sm text-white placeholder-slate-500 font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                   />
                   {errors.idProofNumber && <p className="text-xs text-red-400 mt-1">{errors.idProofNumber}</p>}
@@ -693,7 +671,7 @@ export const Register = () => {
               {/* ID Proof File Upload */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Upload ID Proof Document (PDF, JPG, PNG - Max 10MB) <span className="text-red-400">*</span>
+                  Upload Government ID Document (PDF, JPG, PNG - Max 10MB) <span className="text-red-400">*</span>
                 </label>
                 <div className="relative border-2 border-dashed border-slate-700 hover:border-sky-500 bg-slate-950/50 rounded-xl p-5 text-center transition">
                   <input
@@ -722,32 +700,6 @@ export const Register = () => {
                   </div>
                 </div>
                 {errors.idProofFile && <p className="text-xs text-red-400 mt-1">{errors.idProofFile}</p>}
-              </div>
-
-              {/* Profile Photo Upload (Optional) */}
-              <div className="pt-2">
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Official Profile Photo <span className="text-slate-500">(Optional)</span>
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-                    {profilePreview ? (
-                      <img src={profilePreview} alt="Preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <Camera className="w-6 h-6 text-slate-500" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/jpg"
-                      onChange={handleProfilePhotoChange}
-                      className="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"
-                    />
-                    <p className="text-[11px] text-slate-500 mt-1">Recommended 300x300px JPG or PNG</p>
-                    {errors.profilePhoto && <p className="text-xs text-red-400 mt-1">{errors.profilePhoto}</p>}
-                  </div>
-                </div>
               </div>
             </div>
           )}
@@ -907,12 +859,8 @@ export const Register = () => {
               <div className="bg-slate-950/80 rounded-xl border border-slate-800 p-4 space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden">
-                      {profilePreview ? (
-                        <img src={profilePreview} alt="Officer" className="w-full h-full object-cover" />
-                      ) : (
-                        <User className="w-5 h-5 text-sky-400" />
-                      )}
+                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden text-sky-400">
+                      <User className="w-5 h-5 text-sky-400" />
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-white">
@@ -945,11 +893,11 @@ export const Register = () => {
                     <p className="font-semibold text-slate-200 mt-0.5 font-mono">{formData.mobileNumber}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500">Document Type:</span>
+                    <span className="text-slate-500">Government ID Type:</span>
                     <p className="font-semibold text-slate-200 mt-0.5">{formData.idProofType}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500">Masked ID Number:</span>
+                    <span className="text-slate-500">Government ID (Masked):</span>
                     <p className="font-semibold text-slate-200 mt-0.5 font-mono">
                       {getMaskedId(formData.idProofNumber)}
                     </p>
@@ -959,7 +907,7 @@ export const Register = () => {
                     <p className="font-semibold text-sky-400 mt-0.5 font-mono">@{formData.username}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500">Document File:</span>
+                    <span className="text-slate-500">Government ID Document:</span>
                     <p className="font-semibold text-emerald-400 mt-0.5 truncate">{idFilePreviewName || 'Attached'}</p>
                   </div>
                 </div>

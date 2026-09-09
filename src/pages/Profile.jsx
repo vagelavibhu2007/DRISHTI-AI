@@ -183,7 +183,7 @@ export const Profile = () => {
                     <FileCheck2 className="w-3.5 h-3.5 text-slate-400" />
                     <span>ID Proof Type:</span>
                   </span>
-                  <span className="font-semibold text-slate-800">{user?.id_proof_type || 'Aadhaar Card'}</span>
+                  <span className="font-semibold text-slate-800">{user?.id_proof_type || 'Government ID'}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-slate-600">

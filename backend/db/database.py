@@ -107,7 +107,7 @@ def init_db():
                 authority_type='CENTRAL_AUTHORITY',
                 state=None,
                 position='Chief Project Officer (Central)',
-                id_proof_type='Aadhaar Card',
+                id_proof_type='Government ID',
                 id_proof_number='123456789012',
                 id_proof_file_path='uploads/id_proofs/default_central.pdf',
                 profile_photo_path=None,
