@@ -8,6 +8,7 @@ import indiaGeoData from '../../data/india_states_simplified.json';
 import { INDIA_STATE_PATHS } from '../../data/indiaMapPaths';
 import { STATE_RISK_DATA, MOCK_PROJECTS } from '../../data/mockData';
 import { getRiskLevel, isProjectInState, extractProjectStates, normalizeStateName } from '../../utils/riskUtils';
+import { resolveProjectLocation } from '../../data/canonicalLocations';
 import { RiskBadge } from '../common/RiskBadge';
 import {
   MapPin,
@@ -59,37 +60,35 @@ const ProjectClusterLayer = ({
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       spiderfyOnMaxZoom: true,
-      spiderfyDistanceMultiplier: 2.0,
-      maxClusterRadius: 48,
-      disableClusteringAtZoom: 14,
+      spiderfyDistanceMultiplier: 1.6,
+      maxClusterRadius: 36,
+      disableClusteringAtZoom: 12,
       chunkedLoading: true,
       chunkInterval: 50,
-      chunkDelay: 20,
+      chunkDelay: 15,
       iconCreateFunction: (cluster) => {
         const markers = cluster.getAllChildMarkers();
         const count = markers.length;
         const hasCritical = markers.some((m) => m.options?.riskLevel === 'CRITICAL');
         const hasHigh = markers.some((m) => m.options?.riskLevel === 'HIGH');
-        const hasMed = markers.some((m) => m.options?.riskLevel === 'MEDIUM');
 
-        let badgeBg = 'bg-emerald-600 border-emerald-300';
-        let glow = 'rgba(16, 185, 129, 0.4)';
+        // Compact, subtle, executive badge with refined risk accent
+        let borderClass = 'border-slate-400/80';
+        let indicatorHtml = '';
         if (hasCritical) {
-          badgeBg = 'bg-red-600 border-red-300';
-          glow = 'rgba(239, 68, 68, 0.5)';
+          borderClass = 'border-red-500 ring-2 ring-red-400/20';
+          indicatorHtml = `<span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 border border-white"></span>`;
         } else if (hasHigh) {
-          badgeBg = 'bg-orange-600 border-orange-300';
-          glow = 'rgba(249, 115, 22, 0.5)';
-        } else if (hasMed) {
-          badgeBg = 'bg-amber-600 border-amber-300';
-          glow = 'rgba(245, 158, 11, 0.5)';
+          borderClass = 'border-orange-500 ring-2 ring-orange-400/20';
+          indicatorHtml = `<span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-500 border border-white"></span>`;
         }
 
-        const size = count > 99 ? 42 : count > 9 ? 38 : 34;
+        const size = count > 99 ? 32 : count > 9 ? 28 : 26;
 
         return L.divIcon({
-          html: `<div style="width: ${size}px; height: ${size}px; box-shadow: 0 0 14px ${glow};" class="${badgeBg} border-2 text-white rounded-full flex items-center justify-center font-bold font-mono text-xs shadow-lg transition-transform hover:scale-110">
+          html: `<div style="width: ${size}px; height: ${size}px;" class="relative bg-slate-900/90 ${borderClass} border text-white rounded-full flex items-center justify-center font-bold font-mono text-[11px] shadow-md transition-transform hover:scale-105 select-none">
                   <span>${count}</span>
+                  ${indicatorHtml}
                 </div>`,
           className: 'drishti-cluster-marker',
           iconSize: L.point(size, size),
@@ -105,17 +104,18 @@ const ProjectClusterLayer = ({
       const isHigh = p.riskLevel === 'HIGH';
       const isMed = p.riskLevel === 'MEDIUM';
 
-      let pinColor = '#10B981'; // Green
-      let markerRadius = 7;
+      // Restored previous authentic small circular risk dots
+      let pinColor = '#10B981'; // Green (Low)
+      let markerRadius = 6;
       if (isCrit) {
-        pinColor = '#EF4444'; // Red
-        markerRadius = 9;
+        pinColor = '#EF4444'; // Red (Critical)
+        markerRadius = 7.5;
       } else if (isHigh) {
-        pinColor = '#F97316'; // Orange
-        markerRadius = 8;
-      } else if (isMed) {
-        pinColor = '#F59E0B'; // Amber
+        pinColor = '#F97316'; // Orange (High)
         markerRadius = 7;
+      } else if (isMed) {
+        pinColor = '#F59E0B'; // Amber (Medium)
+        markerRadius = 6;
       }
 
       const marker = L.circleMarker([p.geoLat, p.geoLng], {
@@ -129,6 +129,14 @@ const ProjectClusterLayer = ({
       });
 
       // Tooltip
+      const precisionBadge = p.geoPrecision === 'EXACT_COORDINATES' 
+        ? '<span class="text-[9px] text-emerald-400 font-mono font-medium">(Exact Project Coordinates)</span>'
+        : p.geoPrecision === 'DISTRICT_LEVEL'
+        ? '<span class="text-[9px] text-sky-400 font-mono font-medium">(District-level)</span>'
+        : p.geoPrecision === 'CITY_SITE_LEVEL'
+        ? '<span class="text-[9px] text-sky-400 font-mono font-medium">(City/Site-level)</span>'
+        : '<span class="text-[9px] text-slate-400 font-mono">(State-level Regional)</span>';
+
       marker.bindTooltip(
         `<div class="p-2 text-left font-sans text-xs bg-slate-900 text-slate-100 rounded-lg border border-slate-700 shadow-xl min-w-[220px] max-w-[280px]">
           <div class="flex items-center justify-between pb-1 border-b border-slate-700/80 mb-1">
@@ -137,8 +145,8 @@ const ProjectClusterLayer = ({
           </div>
           <div class="text-xs font-bold text-white leading-snug mb-1.5">${p.projectName}</div>
           <div class="text-[11px] text-slate-300 space-y-0.5">
-            <div><span class="text-slate-400">State:</span> <span class="font-semibold text-white">${p.state || 'N/A'}</span></div>
-            ${p.district ? `<div><span class="text-slate-400">District:</span> <span class="text-slate-200">${p.district}</span></div>` : ''}
+            <div><span class="text-slate-400">Location:</span> <span class="font-semibold text-white">${p.locationLabel || p.state || 'N/A'}</span> ${precisionBadge}</div>
+            <div><span class="text-slate-400">State:</span> <span class="text-slate-200">${p.state || 'N/A'}</span></div>
             ${p.status ? `<div><span class="text-slate-400">Status:</span> <span class="text-emerald-400 font-medium">${p.status}</span></div>` : ''}
           </div>
           <div class="flex items-center justify-between pt-1 border-t border-slate-700/80 text-[10px] mt-1.5">
@@ -166,8 +174,16 @@ const ProjectClusterLayer = ({
           <h5 class="font-bold text-sm text-white leading-snug tracking-tight">${p.projectName}</h5>
           <div class="mt-2 space-y-1.5 text-xs bg-slate-800/90 p-2.5 rounded-lg border border-slate-700/80">
             <div class="flex items-start justify-between gap-2">
+              <span class="text-slate-400 font-medium">Location:</span>
+              <span class="font-bold text-white text-right">${p.locationLabel || p.state || 'N/A'}</span>
+            </div>
+            <div class="flex items-start justify-between gap-2">
+              <span class="text-slate-400 font-medium">Location precision:</span>
+              <span class="font-mono text-[11px] text-right font-medium ${p.geoPrecision === 'EXACT_COORDINATES' ? 'text-emerald-400 font-bold' : p.geoPrecision === 'DISTRICT_LEVEL' ? 'text-sky-300' : p.geoPrecision === 'CITY_SITE_LEVEL' ? 'text-sky-300' : 'text-slate-300'}">${p.precisionLabel || 'State-level Regional Location'}</span>
+            </div>
+            <div class="flex items-start justify-between gap-2">
               <span class="text-slate-400 font-medium">State:</span>
-              <span class="font-bold text-white text-right">${p.state || 'N/A'}</span>
+              <span class="font-semibold text-slate-200 text-right">${p.state || 'N/A'}</span>
             </div>
             ${p.ministry ? `
             <div class="flex items-start justify-between gap-2">
@@ -361,34 +377,19 @@ export const IndiaRiskMap = () => {
     });
   }, [allProjects, selectedState, selectedSector, selectedRisk]);
 
-  // Project marker geographic coordinates [lat, lng]
+  // Project marker geographic coordinates [lat, lng] using canonical location resolver
   const projectMarkers = useMemo(() => {
     return filteredMapProjects.map((p) => {
-      let lat = p.lat !== undefined && p.lat !== null ? Number(p.lat) : null;
-      let lng = p.lng !== undefined && p.lng !== null ? Number(p.lng) : null;
-
-      if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) {
-        const pStates = extractProjectStates(p.state);
-        const primaryState = pStates[0] || p.state || 'Maharashtra';
-        const stateObj = INDIA_STATE_PATHS.find(
-          (s) =>
-            s.name.toLowerCase() === primaryState.toLowerCase() ||
-            normalizeStateName(s.name).toLowerCase() === normalizeStateName(primaryState).toLowerCase()
-        );
-
-        if (stateObj && stateObj.lonLatCentroid) {
-          lng = stateObj.lonLatCentroid[0];
-          lat = stateObj.lonLatCentroid[1];
-        } else {
-          lat = 22.718;
-          lng = 70.452;
-        }
-      }
-
+      const locInfo = resolveProjectLocation(p);
       return {
         ...p,
-        geoLat: lat,
-        geoLng: lng
+        geoLat: locInfo.lat,
+        geoLng: locInfo.lng,
+        geoPrecision: locInfo.precision,
+        precisionLabel: locInfo.precisionLabel,
+        locationLabel: locInfo.locationLabel,
+        locationType: locInfo.locationType,
+        isExact: locInfo.isExact
       };
     });
   }, [filteredMapProjects]);
@@ -660,25 +661,30 @@ export const IndiaRiskMap = () => {
             </MapContainer>
 
             {/* Bottom Floating Legend on Clean White Background */}
-            <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-200/90 shadow-md text-slate-800 space-y-1">
-              <span className="font-bold text-slate-500 uppercase tracking-wider block text-[9px]">
-                Project Risk Intensity
-              </span>
+            <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-md text-slate-800 space-y-1.5 max-w-[340px]">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 pb-1 text-[10px]">
+                <span className="font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                  <span className="text-gov-700">●</span> Project Risk
+                </span>
+                <span className="text-slate-500 font-medium text-[9px] flex items-center gap-1">
+                  <span>○</span> Geographic Accuracy: Inferred / Regional
+                </span>
+              </div>
               <div className="flex items-center gap-3 text-[11px] font-semibold">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-red-500 border border-white shadow-sm" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 border border-white shadow-sm" />
                   <span className="text-slate-700">Critical (&gt;70)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-orange-500 border border-white shadow-sm" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 border border-white shadow-sm" />
                   <span className="text-slate-700">High (55–70)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-amber-500 border border-white shadow-sm" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 border border-white shadow-sm" />
                   <span className="text-slate-700">Medium (40–55)</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500 border border-white shadow-sm" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white shadow-sm" />
                   <span className="text-slate-700">Low (&lt;40)</span>
                 </div>
               </div>
