@@ -19,8 +19,6 @@ import KPICard from '../components/dashboard/KPICard';
 import RiskOverview from '../components/dashboard/RiskOverview';
 import CostTimeRiskCards from '../components/dashboard/CostTimeRiskCards';
 import RiskTrend from '../components/dashboard/RiskTrend';
-import ProjectFilters from '../components/projects/ProjectFilters';
-import ProjectTable from '../components/projects/ProjectTable';
 import AlertCard from '../components/alerts/AlertCard';
 import { RealtimePredictionModal } from '../components/common/RealtimePredictionModal';
 
@@ -28,7 +26,6 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const {
     stats,
-    filteredProjects,
     setSelectedRiskFilter,
     alerts,
     updateAlertStatus,
@@ -173,24 +170,6 @@ export const Dashboard = () => {
             />
           ))}
         </div>
-      </div>
-
-      {/* Section 5: High-Risk Projects & Master Table */}
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-base font-bold text-slate-900">High-Risk Infrastructure Projects</h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Real-time ranked asset assessment sorted by predicted overall risk index
-          </p>
-        </div>
-
-        <ProjectFilters resultsCount={filteredProjects.length} />
-
-        <ProjectTable
-          projectsList={filteredProjects}
-          pageSize={10}
-          enablePagination={true}
-        />
       </div>
 
       {/* Real-Time Prediction Modal */}
