@@ -25,7 +25,7 @@ import {
   Cpu,
   Bookmark
 } from 'lucide-react';
-import { generatePmoBriefData, exportPmoBriefToCSV, formatCurrency, formatPercent, getRiskColor } from '../../utils/riskUtils';
+import { generatePmoBriefData, exportPmoBriefToCSV, printSinglePmoDossier, formatCurrency, formatPercent, getRiskColor } from '../../utils/riskUtils';
 
 export const PmoBriefingSheetModal = ({
   project,
@@ -50,18 +50,19 @@ export const PmoBriefingSheetModal = ({
     }
   }, [project]);
 
-  React.useEffect(() => {
-    if (autoPrint) {
-      const timer = setTimeout(() => {
-        window.print();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [autoPrint]);
-
   // Find active project
   const currentProject = projectsList.find((p) => String(p.projectId) === String(selectedProjectId)) || initialProject;
   const brief = generatePmoBriefData(currentProject);
+
+  React.useEffect(() => {
+    if (autoPrint && brief) {
+      const timer = setTimeout(() => {
+        printSinglePmoDossier(brief);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [autoPrint, selectedProjectId]);
+
 
   if (!brief) return null;
 
@@ -120,12 +121,7 @@ TARGET REVIEW: ${brief.targetAudience}
   };
 
   const handleExportPDF = () => {
-    const originalTitle = document.title;
-    document.title = `PMO_Executive_Dossier_Project_${brief.projectId}_${(brief.title || '').replace(/[^a-zA-Z0-9]/g, '_')}`;
-    window.print();
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 1200);
+    printSinglePmoDossier(brief);
   };
 
   const handleExportCSV = () => {
