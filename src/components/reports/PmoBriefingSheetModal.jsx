@@ -120,7 +120,12 @@ TARGET REVIEW: ${brief.targetAudience}
   };
 
   const handleExportPDF = () => {
+    const originalTitle = document.title;
+    document.title = `PMO_Executive_Dossier_Project_${brief.projectId}_${(brief.title || '').replace(/[^a-zA-Z0-9]/g, '_')}`;
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1200);
   };
 
   const handleExportCSV = () => {
