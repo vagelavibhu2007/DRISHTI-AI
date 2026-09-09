@@ -34,7 +34,25 @@ export const DashboardProvider = ({ children }) => {
     }
   }, [isStateAuthority, assignedState]);
 
-  // Modals & Drawers
+  // Modals & Drawers & Layout
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('drishti_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('drishti_sidebar_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
   const [drawerProjectId, setDrawerProjectId] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -155,7 +173,10 @@ export const DashboardProvider = ({ children }) => {
         setIsHelpOpen,
         isPredictionModalOpen,
         setIsPredictionModalOpen,
-        updateAlertStatus
+        updateAlertStatus,
+        sidebarCollapsed,
+        setSidebarCollapsed,
+        toggleSidebar
       }}
     >
       {children}

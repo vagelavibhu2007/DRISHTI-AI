@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Bell,
   Search,
@@ -13,18 +13,31 @@ import {
   Settings,
   ChevronDown,
   Building2,
-  MapPin
+  MapPin,
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
 import { useAuth } from '../../context/AuthContext';
 import { RiskBadge } from '../common/RiskBadge';
 
 export const Navbar = () => {
-  const { stats, alerts, searchQuery, setSearchQuery, setIsSettingsOpen } = useDashboard();
+  const {
+    stats,
+    alerts,
+    searchQuery,
+    setSearchQuery,
+    setIsSettingsOpen,
+    sidebarCollapsed,
+    toggleSidebar
+  } = useDashboard();
   const { user, logout, isCentralAuthority, isStateAuthority } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -43,8 +56,21 @@ export const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/90 shadow-sm flex items-center justify-between px-4 sm:px-6">
-      {/* Left Area: Govt Badge & Search */}
-      <div className="flex items-center gap-4 flex-1 max-w-xl">
+      {/* Left Area: Sidebar Toggle, Govt Badge & Search */}
+      <div className="flex items-center gap-3 flex-1 max-w-xl">
+        <button
+          onClick={toggleSidebar}
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition focus:outline-none"
+          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {sidebarCollapsed ? (
+            <PanelLeft className="w-5 h-5 text-gov-700" />
+          ) : (
+            <PanelLeftClose className="w-5 h-5 text-slate-600" />
+          )}
+        </button>
+
         {/* National Emblem stylized tag */}
         <div className="hidden lg:flex items-center gap-2 pl-1 pr-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700">
           <div className="w-5 h-5 rounded bg-gov-700 text-white flex items-center justify-center font-bold text-[10px]">
@@ -56,17 +82,19 @@ export const Navbar = () => {
           </div>
         </div>
 
-        {/* Global Quick Search */}
-        <form onSubmit={handleSearchSubmit} className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search projects by ID, name, state or sector..."
-            className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 hover:border-slate-300 focus:bg-white rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gov-700/20 focus:border-gov-700 transition"
-          />
-        </form>
+        {/* Global Quick Search (Visible ONLY on Dashboard) */}
+        {isDashboard && (
+          <form onSubmit={handleSearchSubmit} className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search projects by ID, name, state or sector..."
+              className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 hover:border-slate-300 focus:bg-white rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-gov-700/20 focus:border-gov-700 transition"
+            />
+          </form>
+        )}
       </div>
 
       {/* Right Area: System Status, Date & Actions */}

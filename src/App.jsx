@@ -6,6 +6,7 @@ import { QuickProjectDrawer } from './components/common/QuickProjectDrawer';
 import { SettingsModal, HelpModal } from './components/layout/SystemModals';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ScrollToTop from './components/common/ScrollToTop';
+import { useDashboard } from './context/DashboardContext';
 
 // Pages
 // Auth Pages
@@ -27,6 +28,8 @@ import Reports from './pages/Reports';
 
 // Authenticated Layout Wrapper
 const AuthenticatedLayout = ({ children }) => {
+  const { sidebarCollapsed } = useDashboard();
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-slate-50 flex">
@@ -34,7 +37,11 @@ const AuthenticatedLayout = ({ children }) => {
         <Sidebar />
 
         {/* Main Application Content Body */}
-        <div className="flex-1 flex flex-col min-w-0 pl-20 sm:pl-64 transition-all duration-300">
+        <div
+          className={`flex-1 flex flex-col min-w-0 ${
+            sidebarCollapsed ? 'pl-20' : 'pl-20 sm:pl-64'
+          } transition-all duration-300 ease-in-out`}
+        >
           <Navbar />
 
           <div className="flex-1">

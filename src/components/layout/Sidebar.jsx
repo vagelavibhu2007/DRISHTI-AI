@@ -19,8 +19,14 @@ import {
 import { useDashboard } from '../../context/DashboardContext';
 
 export const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  const { stats, alerts, setIsSettingsOpen, setIsHelpOpen } = useDashboard();
+  const {
+    sidebarCollapsed: collapsed,
+    toggleSidebar,
+    stats,
+    alerts,
+    setIsSettingsOpen,
+    setIsHelpOpen
+  } = useDashboard();
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -146,7 +152,7 @@ export const Sidebar = () => {
 
         {/* Collapse Toggle */}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleSidebar}
           className="w-full flex items-center justify-center gap-2 py-2 mt-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-gov-900 rounded-lg transition"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
