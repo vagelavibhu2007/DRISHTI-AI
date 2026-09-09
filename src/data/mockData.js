@@ -667,54 +667,29 @@ There are **186 projects** where expenditure exceeds 70% but physical progress r
 
 export const REPORTS_LIST = [
   {
-    id: 'REP-2026-Q3-01',
-    title: 'National Infrastructure Risk Assessment - Q3 2026',
-    category: 'Executive Summary',
-    description: 'Comprehensive macro analysis covering all 1,966 projects across 8 central ministries.',
-    generatedDate: '04 Sep 2026',
-    fileSize: '4.8 MB',
-    format: 'PDF',
-    badge: 'Official'
+    id: 'REP-2026-PMO-00',
+    title: 'PMO Infrastructure Briefing Dossier (Inter-Ministerial)',
+    category: 'PMO Executive Brief',
+    description: 'Executive intelligence dossier with SHAP root-cause bottlenecks, fiscal vs. physical divergence, and cabinet directives across all projects.',
+    generatedDate: '09 Sep 2026',
+    fileSize: '5.2 MB',
+    format: 'PDF / CSV',
+    badge: 'PMO Master',
+    isPmoBrief: true
   },
   {
     id: 'REP-2026-CRIT-02',
     title: 'High-Risk & Critical Projects Dossier (410 Assets)',
     category: 'Priority Action',
-    description: 'Detailed project-level SHAP risk breakdown for Cabinet Secretariat & PRAGATI review.',
+    description: 'Detailed project-level SHAP risk breakdown and fiscal exposure analysis for Cabinet Secretariat & PRAGATI priority review.',
     generatedDate: '03 Sep 2026',
     fileSize: '12.4 MB',
-    format: 'PDF',
-    badge: 'Critical'
-  },
-  {
-    id: 'REP-2026-GEO-03',
-    title: 'State-wise Risk & Spatial Bottleneck Report',
-    category: 'Geographic Intelligence',
-    description: 'Corridor-level land acquisition, environmental clearance, and contractor performance map.',
-    generatedDate: '01 Sep 2026',
-    fileSize: '8.2 MB',
-    format: 'PDF',
-    badge: 'Spatial'
-  },
-  {
-    id: 'REP-2026-COST-04',
-    title: 'Predicted Cost Escalation & Fiscal Exposure Forecast',
-    category: 'Financial Analytics',
-    description: 'Quantitative probability distributions of potential ₹11.42 Lakh Cr capital risk.',
-    generatedDate: '28 Aug 2026',
-    fileSize: '3.6 MB',
-    format: 'CSV / PDF',
-    badge: 'Financial'
-  },
-  {
-    id: 'REP-2026-MIN-05',
-    title: 'Ministry of Jal Shakti - Sectoral Vulnerability Audit',
-    category: 'Sector Dossier',
-    description: 'Deep dive into 342 irrigation and water infrastructure projects across 18 river basins.',
-    generatedDate: '25 Aug 2026',
-    fileSize: '6.1 MB',
-    format: 'PDF',
-    badge: 'Sector'
+    format: 'PDF / CSV',
+    badge: 'Critical (410)',
+    isPmoBrief: true,
+    isCriticalOnly: true
   }
 ];
+
+
 

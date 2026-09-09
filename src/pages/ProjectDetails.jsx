@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   Cpu,
   Info,
-  ShieldCheck
+  ShieldCheck,
+  FileText
 } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 import { api } from '../services/api';
@@ -23,6 +24,7 @@ import StatusBadge from '../components/common/StatusBadge';
 import ShapContributionBars from '../components/projects/ShapContributionBars';
 import { formatCurrency, formatPercent } from '../utils/riskUtils';
 import AlertCard from '../components/alerts/AlertCard';
+import PmoBriefingSheetModal from '../components/reports/PmoBriefingSheetModal';
 
 export const ProjectDetails = () => {
   const { id } = useParams();
@@ -36,6 +38,7 @@ export const ProjectDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [isForbidden, setIsForbidden] = useState(false);
+  const [pmoModalOpen, setPmoModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -126,13 +129,23 @@ export const ProjectDetails = () => {
       title={project.projectName}
       subtitle={`Project ID: #${project.projectId} • ${project.ministry} • ${project.sector} • ${project.state} (${project.district || 'Zone'})`}
       action={
-        <button
-          onClick={() => navigate('/projects')}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-sm transition"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
-          <span>Back to Projects</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPmoModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-950 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg shadow-sm transition"
+            title="Generate PMO Executive Briefing Sheet"
+          >
+            <FileText className="w-3.5 h-3.5 text-amber-700" />
+            <span>PMO Briefing Sheet</span>
+          </button>
+          <button
+            onClick={() => navigate('/projects')}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-sm transition"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
+            <span>Back to Projects</span>
+          </button>
+        </div>
       }
     >
       {/* SECTION 1: AI-ASSISTED RISK ASSESSMENT HERO (Gauge + 3 Cards) */}
@@ -205,25 +218,25 @@ export const ProjectDetails = () => {
               </div>
             </div>
 
-            {/* Card 3: Overall Risk */}
-            <div className="p-5 rounded-xl border border-slate-300 bg-slate-50 flex flex-col justify-between">
+            {/* Card 3: Physical vs Expenditure Divergence */}
+            <div className="p-5 rounded-xl border border-amber-200 bg-amber-50/50 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  <span>Composite Hazard</span>
-                  <Gauge className="w-4 h-4 text-gov-700" />
+                <div className="flex items-center justify-between text-xs font-bold text-amber-800 uppercase tracking-wider mb-2">
+                  <span>Progress Gap</span>
+                  <Gauge className="w-4 h-4 text-amber-700" />
                 </div>
-                <div className="font-mono text-3xl font-extrabold text-slate-900">
-                  {Number(project.overallRisk).toFixed(1)}
+                <div className="font-mono text-3xl font-extrabold text-amber-700">
+                  {formatPercent(Math.abs((project.expenditurePercentage || 0) - (project.physicalProgress || 0)))}
                 </div>
-                <span className="text-[11px] text-slate-600 font-medium block mt-1">
-                  Ensemble Risk Score
+                <span className="text-[11px] text-amber-800 font-medium block mt-1">
+                  Spend vs Physical Delta
                 </span>
                 <span className="text-[10px] text-slate-500 block font-mono mt-0.5">
-                  Formula: (Cost + Time) / 2
+                  Expenditure: {formatPercent(project.expenditurePercentage)} | Physical: {formatPercent(project.physicalProgress)}
                 </span>
               </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-4">
-                <div className="bg-gov-700 h-full rounded-full" style={{ width: `${project.overallRisk}%` }} />
+              <div className="w-full bg-amber-200/60 h-2 rounded-full overflow-hidden mt-4">
+                <div className="bg-amber-600 h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, (project.expenditurePercentage || 0) - (project.physicalProgress || 0)))}%` }} />
               </div>
             </div>
           </div>
@@ -397,6 +410,15 @@ export const ProjectDetails = () => {
           <strong>AI Disclaimer:</strong> AI predictions are model-based estimates intended to support proactive project monitoring and decision-making.
         </span>
       </div>
+
+      {/* PMO Executive Briefing Sheet Modal */}
+      {pmoModalOpen && (
+        <PmoBriefingSheetModal
+          project={project}
+          projectsList={projects}
+          onClose={() => setPmoModalOpen(false)}
+        />
+      )}
     </PageContainer>
   );
 };
