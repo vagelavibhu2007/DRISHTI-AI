@@ -20,11 +20,8 @@ export const ProtectedRoute = ({ children }) => {
         </div>
 
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-bold tracking-tight text-white flex items-center justify-center gap-2">
-            <span>DRISHTI AI</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-mono border border-sky-500/30">
-              v4.2.0
-            </span>
+          <h2 className="text-xl font-bold tracking-tight text-white">
+            DRISHTI AI
           </h2>
           <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">
             Infrastructure Project Intelligence Platform
