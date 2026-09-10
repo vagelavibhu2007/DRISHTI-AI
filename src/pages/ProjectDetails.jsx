@@ -4,7 +4,7 @@ import {
   Building2,
   MapPin,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Clock,
   Gauge,
   Sparkles,
@@ -187,7 +187,7 @@ export const ProjectDetails = () => {
               <div>
                 <div className="flex items-center justify-between text-xs font-bold text-red-700 uppercase tracking-wider mb-2">
                   <span>Cost Overrun Risk</span>
-                  <DollarSign className="w-4 h-4" />
+                  <IndianRupee className="w-4 h-4" />
                 </div>
                 <div className="font-mono text-3xl font-extrabold text-red-600">
                   {formatPercent(project.costRisk)}

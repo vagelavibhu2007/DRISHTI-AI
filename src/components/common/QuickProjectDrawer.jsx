@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, ExternalLink, TrendingUp, DollarSign, Clock, MapPin, Building, AlertTriangle } from 'lucide-react';
+import { X, ExternalLink, TrendingUp, IndianRupee, Clock, MapPin, Building, AlertTriangle } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
 import { RiskBadge } from './RiskBadge';
 import { RiskGauge } from './RiskGauge';
@@ -73,7 +73,7 @@ export const QuickProjectDrawer = () => {
                 <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm">
                   <div className="flex items-center justify-between gap-4 text-xs font-semibold text-slate-500">
                     <span className="flex items-center gap-1.5 text-red-600">
-                      <DollarSign className="w-3.5 h-3.5" />
+                      <IndianRupee className="w-3.5 h-3.5" />
                       Cost Overrun Risk
                     </span>
                     <span className="font-mono text-sm font-bold text-slate-900">{formatPercent(p.costRisk)}</span>

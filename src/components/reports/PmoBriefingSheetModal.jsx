@@ -9,7 +9,7 @@ import {
   Building2,
   MapPin,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Clock,
   Gauge,
   AlertTriangle,

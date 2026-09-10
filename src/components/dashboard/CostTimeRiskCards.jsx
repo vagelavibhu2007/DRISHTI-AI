@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { DollarSign, Clock, Sparkles } from 'lucide-react';
+import { IndianRupee, Clock, Sparkles } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
 
 export const CostTimeRiskCards = () => {
@@ -93,7 +93,7 @@ export const CostTimeRiskCards = () => {
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-red-50 text-red-700">
-                <DollarSign className="w-4 h-4" />
+                <IndianRupee className="w-4 h-4" />
               </div>
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-none">

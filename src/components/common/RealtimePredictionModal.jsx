@@ -4,7 +4,7 @@ import {
   X,
   Cpu,
   Loader2,
-  DollarSign,
+  IndianRupee,
   Clock,
   Gauge,
   AlertTriangle,

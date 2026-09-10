@@ -18,7 +18,7 @@ import {
   ShieldAlert,
   ArrowUpRight,
   MapPin,
-  DollarSign,
+  IndianRupee,
   Clock,
   Gauge,
   Activity,
