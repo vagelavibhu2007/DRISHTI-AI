@@ -6,6 +6,7 @@ import { QuickProjectDrawer } from './components/common/QuickProjectDrawer';
 import { SettingsModal, HelpModal } from './components/layout/SystemModals';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ScrollToTop from './components/common/ScrollToTop';
+import SecurityGuard from './components/common/SecurityGuard';
 import { useDashboard } from './context/DashboardContext';
 
 // Pages
@@ -64,6 +65,7 @@ export const App = () => {
   return (
     <>
       <ScrollToTop />
+      <SecurityGuard />
       <Routes>
         {/* Public Authentication Routes */}
         <Route path="/login" element={<Login />} />
