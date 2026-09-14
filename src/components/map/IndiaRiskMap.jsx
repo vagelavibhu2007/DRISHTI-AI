@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, WMSTileLayer, GeoJSON, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
 import indiaGeoData from '../../data/india_states_simplified.json';
 import { INDIA_STATE_PATHS } from '../../data/indiaMapPaths';
 import { STATE_RISK_DATA, MOCK_PROJECTS } from '../../data/mockData';
@@ -58,7 +58,7 @@ export const IndiaRiskMap = () => {
   const [selectedSector, setSelectedSector] = useState('ALL');
   const [selectedRisk, setSelectedRisk] = useState('ALL');
   const [activeHoverState, setActiveHoverState] = useState(null);
-  const [tileStyle, setTileStyle] = useState('osm'); // 'osm' or 'carto'
+  const [tileStyle, setTileStyle] = useState('bhuvan'); // 'bhuvan', 'osm', or 'carto'
 
   // Sync state filter when user authority changes
   useEffect(() => {
@@ -376,6 +376,17 @@ export const IndiaRiskMap = () => {
           {/* Basemap Tile Switcher */}
           <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
             <button
+              onClick={() => setTileStyle('bhuvan')}
+              className={`px-2.5 py-1 rounded-md font-semibold transition ${
+                tileStyle === 'bhuvan'
+                  ? 'bg-white text-gov-800 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Official ISRO Bhuvan Satellite & Geographic Basemap"
+            >
+              ISRO Bhuvan
+            </button>
+            <button
               onClick={() => setTileStyle('osm')}
               className={`px-2.5 py-1 rounded-md font-semibold transition ${
                 tileStyle === 'osm'
@@ -427,8 +438,18 @@ export const IndiaRiskMap = () => {
               {/* Dynamic Viewport Controller */}
               <MapViewportController selectedState={selectedState} stateStats={stateStats} />
 
-              {/* Light OpenStreetMap Basemap Tiles */}
-              {tileStyle === 'osm' ? (
+              {/* Basemap Tiles: Official ISRO Bhuvan / OSM / Carto */}
+              {tileStyle === 'bhuvan' ? (
+                <WMSTileLayer
+                  url="https://bhuvan-app1.nrsc.gov.in/tilecache/tilecache.py"
+                  layers="bhuvan_imagery"
+                  format="image/jpeg"
+                  transparent={false}
+                  version="1.1.1"
+                  attribution='&copy; <a href="https://bhuvan.nrsc.gov.in" target="_blank" rel="noreferrer">ISRO / NRSC Bhuvan</a>'
+                  maxZoom={19}
+                />
+              ) : tileStyle === 'osm' ? (
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
