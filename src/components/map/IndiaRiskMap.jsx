@@ -58,7 +58,7 @@ export const IndiaRiskMap = () => {
   const [selectedSector, setSelectedSector] = useState('ALL');
   const [selectedRisk, setSelectedRisk] = useState('ALL');
   const [activeHoverState, setActiveHoverState] = useState(null);
-  const [tileStyle, setTileStyle] = useState('osm'); // 'osm', 'carto', or 'bhuvan'
+  const [tileStyle, setTileStyle] = useState('bhuvan'); // 'bhuvan', 'osm', or 'carto'
 
   // Sync state filter when user authority changes
   useEffect(() => {
@@ -440,15 +440,22 @@ export const IndiaRiskMap = () => {
 
               {/* Basemap Tiles: Official ISRO Bhuvan / OSM / Carto */}
               {tileStyle === 'bhuvan' ? (
-                <WMSTileLayer
-                  url="https://bhuvan-app1.nrsc.gov.in/tilecache/tilecache.py"
-                  layers="bhuvan_imagery"
-                  format="image/jpeg"
-                  transparent={false}
-                  version="1.1.1"
-                  attribution='&copy; <a href="https://bhuvan.nrsc.gov.in" target="_blank" rel="noreferrer">ISRO / NRSC Bhuvan</a>'
-                  maxZoom={19}
-                />
+                <>
+                  <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+                    attribution='&copy; <a href="https://bhuvan.nrsc.gov.in" target="_blank" rel="noreferrer">ISRO / NRSC Bhuvan</a>'
+                    maxZoom={19}
+                  />
+                  <WMSTileLayer
+                    url="https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms"
+                    layers="basemap:INDIA_STATE_wolabel"
+                    format="image/png"
+                    transparent={true}
+                    version="1.1.1"
+                    attribution='&copy; <a href="https://bhuvan.nrsc.gov.in" target="_blank" rel="noreferrer">ISRO / NRSC Bhuvan</a>'
+                    maxZoom={19}
+                  />
+                </>
               ) : tileStyle === 'osm' ? (
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
