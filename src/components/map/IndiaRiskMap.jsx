@@ -58,7 +58,7 @@ export const IndiaRiskMap = () => {
   const [selectedSector, setSelectedSector] = useState('ALL');
   const [selectedRisk, setSelectedRisk] = useState('ALL');
   const [activeHoverState, setActiveHoverState] = useState(null);
-  const [tileStyle, setTileStyle] = useState('bhuvan'); // 'bhuvan', 'osm', or 'carto'
+  const [tileStyle, setTileStyle] = useState('osm'); // 'osm', 'carto', or 'bhuvan'
 
   // Sync state filter when user authority changes
   useEffect(() => {
