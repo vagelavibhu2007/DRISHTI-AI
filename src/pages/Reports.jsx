@@ -169,9 +169,11 @@ export const Reports = () => {
               <strong className="text-red-400 text-sm sm:text-base">{counts.critical}</strong>
               <span className="text-[10px] text-slate-500 block">Priority Assets</span>
             </div>
-            <div className="p-2 bg-slate-950 rounded-lg border border-slate-800">
+            <div className="p-2 bg-slate-950 rounded-lg border border-slate-800 min-w-[120px]">
               <span className="text-[10px] text-amber-400 uppercase block font-sans font-bold">At-Risk Capital</span>
-              <strong className="text-amber-400 text-xs sm:text-sm">₹{(stats.atRiskCapitalValueCr || 1142800).toLocaleString()} Cr</strong>
+              <strong className="text-amber-400 text-xs sm:text-sm whitespace-nowrap block my-0.5">
+                {formatCurrency(stats.atRiskCapitalValueCr || 1142800)}
+              </strong>
               <span className="text-[10px] text-slate-500 block">Exposure</span>
             </div>
             <div className="p-2 bg-slate-950 rounded-lg border border-slate-800">

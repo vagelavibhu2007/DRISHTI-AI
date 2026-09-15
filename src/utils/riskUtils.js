@@ -69,10 +69,11 @@ export const getRiskColor = (levelOrScore) => {
 
 export const formatCurrency = (amountInCr) => {
   if (amountInCr === undefined || amountInCr === null || isNaN(amountInCr)) return '₹ 0 Cr';
-  if (amountInCr >= 1000) {
-    return `₹ ${(amountInCr / 1000).toFixed(2)}k Cr`;
+  const val = Number(amountInCr);
+  if (val >= 100000) {
+    return `₹ ${(val / 100000).toFixed(2)} Lakh Cr`;
   }
-  return `₹ ${Number(amountInCr).toLocaleString('en-IN', { maximumFractionDigits: 1 })} Cr`;
+  return `₹ ${val.toLocaleString('en-IN', { maximumFractionDigits: 1 })} Cr`;
 };
 
 export const formatPercent = (val) => {
