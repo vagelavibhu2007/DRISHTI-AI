@@ -119,11 +119,21 @@ class ProjectRepository:
         canonical PostgreSQL database as the primary source of truth.
         """
         self._projects_db = []
-        self._projects_by_id = {}
+        from backend.db.database import init_db
+        try:
+            init_db()
+        except Exception as e:
+            logger.warning(f"Database init check in repository: {e}")
 
         db = SessionLocal()
         try:
-            projects_query = db.query(Project).all()
+            try:
+                projects_query = db.query(Project).all()
+            except Exception as q_err:
+                logger.warning(f"Could not query projects table, attempting table creation: {q_err}")
+                from backend.db.database import Base, engine
+                Base.metadata.create_all(bind=engine)
+                projects_query = db.query(Project).all()
 
             # If in production and database is completely empty, raise critical error
             if not projects_query and settings.ENVIRONMENT.lower() in ["production", "prod"]:
@@ -198,30 +208,32 @@ class ProjectRepository:
                     if exp_pct > phys_prog:
                         warnings.append("Financial progress is significantly ahead of physical progress.")
                 else:
-                    # Fallback ML inference for projects without persisted prediction records
-                    p_in = ProjectInput(
-                        project_id=pid_str,
-                        project_name=p.project_name or "Project",
-                        Original_Cost_Cr=orig_cost,
-                        Cumulative_Expenditure_Cr=cum_exp,
-                        Physical_Progress_Pct=phys_prog,
-                        Expenditure_Pct_of_Original_Cost=exp_pct,
-                        Ministry=p.ministry or "Unknown",
-                        Sector=p.sector or "Unknown",
-                        State=p.state or "Unknown"
-                    )
-                    pred_res = prediction_service.predict_single(p_in)
-                    cost_risk = pred_res.cost_overrun_probability
-                    pred_cost_overrun = pred_res.predicted_cost_overrun
-                    time_risk = pred_res.time_overrun_probability
-                    pred_time_overrun = pred_res.predicted_time_overrun
-                    overall_risk = pred_res.overall_risk_score
-                    risk_level = pred_res.risk_level
-                    pred_cost_overrun_cr = pred_res.predicted_cost_overrun_cr
-                    est_revised_cost_cr = pred_res.estimated_revised_cost_cr
-                    pred_delay_days = pred_res.predicted_delay_days
-                    delay_months = int(pred_delay_days // 30) if pred_delay_days else int((p.time_overrun_months or 0))
-                    warnings = pred_res.warnings
+                    # Fast parametric initialization from source CSV and risk formulas
+                    diff_gap = exp_pct - phys_prog
+                    cost_risk = round(min(98.5, max(5.0, 35.0 + (diff_gap * 0.72) + (18.0 if exp_pct > 85 else 0.0) + (15.0 if exp_pct > 100 else 0.0))), 2)
+                    time_risk = round(min(99.0, max(5.0, 40.0 + (diff_gap * 0.65) + ((100.0 - phys_prog) * 0.35))), 2)
+                    pred_cost_overrun = int(p.cost_overrun_flag if p.cost_overrun_flag is not None else (1 if cost_risk >= 40.0 else 0))
+                    pred_time_overrun = int(p.time_overrun_flag if p.time_overrun_flag is not None else (1 if time_risk >= 50.0 else 0))
+                    overall_risk = round((cost_risk + time_risk) / 2.0, 2)
+                    if overall_risk >= 80:
+                        risk_level = "CRITICAL"
+                    elif overall_risk >= 50:
+                        risk_level = "HIGH"
+                    elif overall_risk >= 25:
+                        risk_level = "MEDIUM"
+                    else:
+                        risk_level = "LOW"
+                    pred_cost_overrun_cr = float(p.cost_overrun_cr) if p.cost_overrun_cr is not None else None
+                    est_revised_cost_cr = float(p.revised_cost_cr) if p.revised_cost_cr is not None else None
+                    pred_delay_days = float(p.time_overrun_days) if p.time_overrun_days is not None else None
+                    delay_months = int(p.time_overrun_months) if p.time_overrun_months is not None else int((pred_delay_days or 0) // 30)
+                    warnings = []
+                    if overall_risk >= 80:
+                        warnings.append("Project exhibits elevated risk trajectory; recommended for bi-weekly milestone audits.")
+                    if time_risk >= 50:
+                        warnings.append("High probability of time overrun detected.")
+                    if exp_pct > phys_prog:
+                        warnings.append("Financial progress is significantly ahead of physical progress.")
 
                 rec = {
                     "projectId": pid_str,

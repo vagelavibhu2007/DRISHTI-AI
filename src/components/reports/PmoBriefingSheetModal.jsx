@@ -258,16 +258,11 @@ TARGET REVIEW: ${brief.targetAudience}
                   </div>
                 </div>
 
-                {/* Classification & Metadata Badge */}
-                <div className="flex sm:flex-col items-end justify-between sm:justify-center gap-1.5 text-right font-mono border-t sm:border-t-0 border-slate-800 pt-3 sm:pt-0">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${brief.overallRisk >= 70 ? 'bg-red-500/20 text-red-300 border border-red-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}`}>
-                    <ShieldAlert className="w-3.5 h-3.5" />
-                    {brief.riskLevel} PRIORITY
-                  </span>
-                  <div className="text-[11px] text-slate-400 space-x-2">
-                    <span>DOSSIER: <strong>PMO-{brief.projectId}</strong></span>
-                    <span>•</span>
-                    <span>{brief.date}</span>
+                {/* Official PRAGATI Format Badge */}
+                <div className="flex items-center justify-end sm:flex-col sm:items-end font-mono">
+                  <div className="px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-400/30 text-right shadow-sm">
+                    <div className="text-[9px] uppercase tracking-widest font-black text-amber-400">PRAGATI REVIEW DOSSIER</div>
+                    <div className="text-[11px] font-bold text-white tracking-wider">DOC REF: DRISHTI-PMO-{brief.projectId}</div>
                   </div>
                 </div>
 
@@ -294,19 +289,49 @@ TARGET REVIEW: ${brief.targetAudience}
                   </h2>
                 </div>
 
-                {/* Key Institutional Nodes */}
-                <div className="grid grid-cols-2 gap-3 text-xs bg-white p-3 rounded-xl border border-slate-200 shadow-sm md:min-w-[340px]">
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Nodal Ministry</span>
-                    <strong className="text-slate-800 font-semibold truncate block" title={brief.ministry}>
-                      {brief.ministry}
-                    </strong>
+                {/* Institutional Nodes, Team Logo & Risk Priority Area */}
+                <div className="flex flex-col gap-2.5 md:min-w-[380px]">
+                  {/* Priority Level Notation, Team Logo & Dossier Reference (Positioned above Location) */}
+                  <div className="flex items-center justify-between gap-2.5 flex-wrap">
+                    {/* Left: Priority Level Notation */}
+                    <div className="flex items-center gap-1.5 font-mono">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider shadow-sm ${brief.overallRisk >= 70 ? 'bg-red-500/15 text-red-700 border border-red-300' : 'bg-amber-500/15 text-amber-800 border border-amber-300'}`}>
+                        <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{brief.riskLevel} PRIORITY</span>
+                      </span>
+                      <div className="text-[10px] text-slate-500 bg-white px-2 py-1 rounded-lg border border-slate-200">
+                        <span>{brief.date}</span>
+                      </div>
+                    </div>
+
+                    {/* Right: Team AAROHAN Logo Badge */}
+                    <div className="bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
+                      <img
+                        src="/aarohan_logo.jpg"
+                        alt="Team AAROHAN"
+                        className="h-8 sm:h-9 w-auto object-contain rounded drop-shadow-2xs"
+                      />
+                      <div className="flex flex-col text-left">
+                        <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-400 font-mono">Analytics By</span>
+                        <span className="text-[10px] font-black text-slate-800 tracking-tight leading-none">TEAM AAROHAN</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Location / Jurisdiction</span>
-                    <strong className="text-slate-800 font-semibold truncate block" title={brief.location}>
-                      {brief.location}
-                    </strong>
+
+                  {/* Key Institutional Nodes (Nodal Ministry & Location / Jurisdiction) */}
+                  <div className="grid grid-cols-2 gap-3 text-xs bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Nodal Ministry</span>
+                      <strong className="text-slate-800 font-semibold truncate block" title={brief.ministry}>
+                        {brief.ministry}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Location / Jurisdiction</span>
+                      <strong className="text-slate-800 font-semibold truncate block" title={brief.location}>
+                        {brief.location}
+                      </strong>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -561,8 +586,8 @@ TARGET REVIEW: ${brief.targetAudience}
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="px-2.5 py-1 bg-slate-800 text-slate-300 rounded border border-slate-700 text-[10px] font-bold uppercase">
-                  CHECKSUM: #{(brief.originalCost * 97).toString(16).toUpperCase()}
+                <span className="px-2.5 py-1 bg-slate-800 text-slate-300 rounded border border-slate-700 text-[10px] font-bold uppercase font-mono">
+                  CHECKSUM: #{Math.abs(Math.round(brief.originalCost * 97)).toString(16).toUpperCase()}
                 </span>
               </div>
             </div>

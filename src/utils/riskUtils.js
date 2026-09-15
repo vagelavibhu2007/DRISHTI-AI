@@ -726,8 +726,10 @@ export const printSinglePmoDossier = (brief) => {
         </div>
       </div>
       <div class="header-right">
-        <div class="priority-badge">${brief.riskLevel} PRIORITY</div>
-        <div style="color:#94A3B8;">DOSSIER: PMO-${brief.projectId} • ${brief.date}</div>
+        <div style="background:rgba(245, 158, 11, 0.15); border:1px solid rgba(245, 158, 11, 0.35); padding:4px 10px; border-radius:6px; text-align:right;">
+          <div style="font-size:8.5px; text-transform:uppercase; font-weight:900; color:#F59E0B; letter-spacing:0.5px;">PRAGATI REVIEW DOSSIER</div>
+          <div style="font-size:10px; font-weight:700; color:#FFFFFF;">DOC REF: DRISHTI-PMO-${brief.projectId}</div>
+        </div>
       </div>
     </div>
 
@@ -740,10 +742,25 @@ export const printSinglePmoDossier = (brief) => {
         </div>
         <h2 class="project-title">${brief.title}</h2>
       </div>
-      <div style="background:#FFFFFF; border:1px solid #CBD5E1; padding:6px 10px; border-radius:6px; min-width:240px; font-size:10px;">
-        <div><strong>Ministry:</strong> ${brief.ministry}</div>
-        <div><strong>Location:</strong> ${brief.location}</div>
-        ${brief.contractor ? `<div><strong>Agency:</strong> ${brief.contractor}</div>` : ''}
+      <div style="display:flex; flex-direction:column; gap:6px; min-width:320px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <div style="display:flex; align-items:center; gap:6px; font-family:monospace; font-size:9.5px;">
+            <span class="priority-badge" style="margin-bottom:0;">${brief.riskLevel} PRIORITY</span>
+            <span style="color:#64748B; font-size:9px;">${brief.date}</span>
+          </div>
+          <div style="background:#FFFFFF; border:1px solid #CBD5E1; padding:2px 6px; border-radius:6px; display:flex; align-items:center; gap:6px;">
+            <img src="/aarohan_logo.jpg" alt="Team AAROHAN" style="height:22px; width:auto; display:block; object-fit:contain;" />
+            <div style="text-align:left; line-height:1;">
+              <span style="font-size:7px; color:#64748B; font-weight:800; text-transform:uppercase; display:block; font-family:monospace;">Team</span>
+              <strong style="font-size:8.5px; color:#0F172A; font-weight:900;">AAROHAN</strong>
+            </div>
+          </div>
+        </div>
+        <div style="background:#FFFFFF; border:1px solid #CBD5E1; padding:6px 10px; border-radius:6px; font-size:10px;">
+          <div><strong>Ministry:</strong> ${brief.ministry}</div>
+          <div><strong>Location:</strong> ${brief.location}</div>
+          ${brief.contractor ? `<div><strong>Agency:</strong> ${brief.contractor}</div>` : ''}
+        </div>
       </div>
     </div>
 

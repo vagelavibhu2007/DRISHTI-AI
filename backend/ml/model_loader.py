@@ -31,6 +31,31 @@ class ModelLoader:
         self.load_models()
         self._initialized = True
 
+    def _patch_pipeline(self, estimator):
+        """
+        Ensures backward compatibility with scikit-learn pipelines unpickled
+        across scikit-learn minor versions (e.g. SimpleImputer _fill_dtype).
+        """
+        if estimator is None:
+            return
+        if hasattr(estimator, 'transformers'):
+            for _, trans, _ in estimator.transformers:
+                self._patch_pipeline(trans)
+        if hasattr(estimator, 'transformers_'):
+            for _, trans, _ in estimator.transformers_:
+                self._patch_pipeline(trans)
+        if hasattr(estimator, 'named_steps'):
+            for step in estimator.named_steps.values():
+                self._patch_pipeline(step)
+        if hasattr(estimator, 'steps'):
+            for _, step in estimator.steps:
+                self._patch_pipeline(step)
+        if hasattr(estimator, 'statistics_') and not hasattr(estimator, '_fill_dtype'):
+            try:
+                estimator._fill_dtype = estimator.statistics_.dtype
+            except Exception:
+                pass
+
     def load_models(self):
         if self.ml_mode.lower() == "mock":
             logger.info("ML_MODE set to 'mock'. Using fallback simulation engine.")
@@ -42,6 +67,7 @@ class ModelLoader:
         try:
             if os.path.exists(settings.COST_CLASSIFIER_PATH):
                 self.cost_classifier = joblib.load(settings.COST_CLASSIFIER_PATH)
+                self._patch_pipeline(self.cost_classifier)
                 logger.info("Cost classifier loaded successfully.")
             else:
                 logger.warning(f"Cost classifier file not found at {settings.COST_CLASSIFIER_PATH}")
@@ -52,7 +78,10 @@ class ModelLoader:
         try:
             if os.path.exists(settings.COST_REGRESSOR_PATH):
                 self.cost_regressor = joblib.load(settings.COST_REGRESSOR_PATH)
+                self._patch_pipeline(self.cost_regressor)
                 logger.info("Cost regressor loaded successfully.")
+            else:
+                logger.warning(f"Cost regressor file not found at {settings.COST_REGRESSOR_PATH}")
         except Exception as e:
             logger.error(f"Failed to load cost regressor: {e}")
 
@@ -68,7 +97,10 @@ class ModelLoader:
         try:
             if os.path.exists(settings.TIME_CLASSIFIER_PATH):
                 self.time_classifier = joblib.load(settings.TIME_CLASSIFIER_PATH)
+                self._patch_pipeline(self.time_classifier)
                 logger.info("Time classifier loaded successfully.")
+            else:
+                logger.warning(f"Time classifier file not found at {settings.TIME_CLASSIFIER_PATH}")
         except Exception as e:
             logger.error(f"Failed to load time classifier: {e}")
 
@@ -76,7 +108,10 @@ class ModelLoader:
         try:
             if os.path.exists(settings.TIME_REGRESSOR_PATH):
                 self.time_regressor = joblib.load(settings.TIME_REGRESSOR_PATH)
+                self._patch_pipeline(self.time_regressor)
                 logger.info("Time regressor loaded successfully.")
+            else:
+                logger.warning(f"Time regressor file not found at {settings.TIME_REGRESSOR_PATH}")
         except Exception as e:
             logger.error(f"Failed to load time regressor: {e}")
 
