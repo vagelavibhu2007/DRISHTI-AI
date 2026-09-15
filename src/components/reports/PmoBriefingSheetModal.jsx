@@ -258,11 +258,19 @@ TARGET REVIEW: ${brief.targetAudience}
                   </div>
                 </div>
 
-                {/* Official PRAGATI Format Badge */}
-                <div className="flex items-center justify-end sm:flex-col sm:items-end font-mono">
-                  <div className="px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-300 border border-amber-400/30 text-right shadow-sm">
-                    <div className="text-[9px] uppercase tracking-widest font-black text-amber-400">PRAGATI REVIEW DOSSIER</div>
-                    <div className="text-[11px] font-bold text-white tracking-wider">DOC REF: DRISHTI-PMO-{brief.projectId}</div>
+                {/* Team AAROHAN Branding Box */}
+                <div className="flex items-center justify-end sm:flex-col sm:items-end flex-shrink-0">
+                  <div className="bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-xl shadow-lg border border-amber-400/40 flex items-center gap-3 transition-transform hover:scale-[1.02]">
+                    <img
+                      src="/aarohan_logo.jpg"
+                      alt="Team AAROHAN"
+                      className="h-10 sm:h-11 w-auto object-contain rounded drop-shadow-sm"
+                    />
+                    <div className="flex flex-col text-left">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 font-mono">Infrastructure Analytics</span>
+                      <span className="text-xs font-black text-slate-900 tracking-tight">TEAM AAROHAN</span>
+                      <span className="text-[9px] font-mono font-bold text-amber-700">DOC REF: DRISHTI-PMO-{brief.projectId}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -289,36 +297,22 @@ TARGET REVIEW: ${brief.targetAudience}
                   </h2>
                 </div>
 
-                {/* Institutional Nodes, Team Logo & Risk Priority Area */}
-                <div className="flex flex-col gap-2.5 md:min-w-[380px]">
-                  {/* Priority Level Notation, Team Logo & Dossier Reference (Positioned above Location) */}
-                  <div className="flex items-center justify-between gap-2.5 flex-wrap">
-                    {/* Left: Priority Level Notation */}
-                    <div className="flex items-center gap-1.5 font-mono">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider shadow-sm ${brief.overallRisk >= 70 ? 'bg-red-500/15 text-red-700 border border-red-300' : 'bg-amber-500/15 text-amber-800 border border-amber-300'}`}>
-                        <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{brief.riskLevel} PRIORITY</span>
-                      </span>
-                      <div className="text-[10px] text-slate-500 bg-white px-2 py-1 rounded-lg border border-slate-200">
-                        <span>{brief.date}</span>
-                      </div>
-                    </div>
-
-                    {/* Right: Team AAROHAN Logo Badge */}
-                    <div className="bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
-                      <img
-                        src="/aarohan_logo.jpg"
-                        alt="Team AAROHAN"
-                        className="h-8 sm:h-9 w-auto object-contain rounded drop-shadow-2xs"
-                      />
-                      <div className="flex flex-col text-left">
-                        <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-400 font-mono">Analytics By</span>
-                        <span className="text-[10px] font-black text-slate-800 tracking-tight leading-none">TEAM AAROHAN</span>
-                      </div>
+                {/* Institutional Nodes & Risk Priority Notation */}
+                <div className="flex flex-col gap-2 md:min-w-[340px]">
+                  {/* Priority Level Notation & Dossier Reference (Positioned above Location) */}
+                  <div className="flex items-center justify-between gap-2 font-mono">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider shadow-sm ${brief.overallRisk >= 70 ? 'bg-red-500/15 text-red-700 border border-red-300' : 'bg-amber-500/15 text-amber-800 border border-amber-300'}`}>
+                      <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>{brief.riskLevel} PRIORITY</span>
+                    </span>
+                    <div className="text-[10.5px] text-slate-500 space-x-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                      <span>DOSSIER: <strong>PMO-{brief.projectId}</strong></span>
+                      <span>•</span>
+                      <span>{brief.date}</span>
                     </div>
                   </div>
 
-                  {/* Key Institutional Nodes (Nodal Ministry & Location / Jurisdiction) */}
+                  {/* Key Institutional Nodes */}
                   <div className="grid grid-cols-2 gap-3 text-xs bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
                     <div>
                       <span className="text-[10px] text-slate-400 font-bold uppercase block">Nodal Ministry</span>
