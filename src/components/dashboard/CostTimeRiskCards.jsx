@@ -10,9 +10,13 @@ import {
 } from 'recharts';
 import { IndianRupee, Clock, Sparkles } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
+import { useAuth } from '../../context/AuthContext';
+import { isProjectInState } from '../../utils/riskUtils';
+import { MOCK_PROJECTS } from '../../data/mockData';
 
 export const CostTimeRiskCards = () => {
-  const { stats, activeStateMetrics, filteredProjects, projects } = useDashboard();
+  const { stats, filteredProjects, projects } = useDashboard();
+  const { isStateAuthority, assignedState } = useAuth();
 
   const { costBins, timeBins, costSevere, timeSevere, avgCostRisk, avgTimeRisk } = useMemo(() => {
     // If state metrics provide calibrated bins and severe counts, prioritize them
@@ -27,9 +31,16 @@ export const CostTimeRiskCards = () => {
       };
     }
 
-    const list = Array.isArray(filteredProjects) && filteredProjects.length > 0
+    const rawList = Array.isArray(filteredProjects) && filteredProjects.length > 0
       ? filteredProjects
-      : Array.isArray(projects) ? projects : [];
+      : Array.isArray(projects) && projects.length > 0
+        ? projects
+        : MOCK_PROJECTS;
+
+    const list = isStateAuthority && assignedState
+      ? rawList.filter((p) => isProjectInState(p, assignedState))
+      : rawList;
+
     const total = list.length;
 
     const cBins = [
@@ -72,8 +83,8 @@ export const CostTimeRiskCards = () => {
       if (tr > 80) tSev++;
     });
 
-    const cAvg = stats?.averageCostRisk ?? (total > 0 ? (list.reduce((acc, p) => acc + Number(p.costRisk || 0), 0) / total).toFixed(1) : 0);
-    const tAvg = stats?.averageTimeRisk ?? (total > 0 ? (list.reduce((acc, p) => acc + Number(p.timeRisk || 0), 0) / total).toFixed(1) : 0);
+    const cAvg = total > 0 ? Number((list.reduce((acc, p) => acc + Number(p.costRisk || p.cost_risk || 0), 0) / total).toFixed(1)) : (stats?.averageCostRisk ?? 0);
+    const tAvg = total > 0 ? Number((list.reduce((acc, p) => acc + Number(p.timeRisk || p.time_risk || 0), 0) / total).toFixed(1)) : (stats?.averageTimeRisk ?? 0);
 
     return {
       costBins: cBins,
@@ -83,7 +94,7 @@ export const CostTimeRiskCards = () => {
       avgCostRisk: cAvg,
       avgTimeRisk: tAvg,
     };
-  }, [filteredProjects, projects, stats]);
+  }, [filteredProjects, projects, stats, isStateAuthority, assignedState]);
 
   const CustomBarTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -221,4 +232,3 @@ export const CostTimeRiskCards = () => {
 };
 
 export default CostTimeRiskCards;
-

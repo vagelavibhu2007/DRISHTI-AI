@@ -164,10 +164,40 @@ export const DashboardProvider = ({ children }) => {
     return projects.find((p) => String(p.projectId) === String(drawerProjectId)) || null;
   }, [projects, drawerProjectId]);
 
+  const effectiveStats = useMemo(() => {
+    if (isStateAuthority && assignedState) {
+      if (stats && stats.state === assignedState && stats.totalProjects !== 1966) {
+        return stats;
+      }
+      const stateProjs = (Array.isArray(projects) ? projects : MOCK_PROJECTS).filter((p) => isProjectInState(p, assignedState));
+      const total = stateProjs.length;
+      const crit = stateProjs.filter((p) => p.riskLevel === 'CRITICAL').length;
+      const high = stateProjs.filter((p) => p.riskLevel === 'HIGH').length;
+      const med = stateProjs.filter((p) => p.riskLevel === 'MEDIUM').length;
+      const low = stateProjs.filter((p) => p.riskLevel === 'LOW').length;
+      const avgR = total > 0 ? Number((stateProjs.reduce((a, b) => a + Number(b.overallRisk || 50), 0) / total).toFixed(1)) : 50;
+      const avgC = total > 0 ? Number((stateProjs.reduce((a, b) => a + Number(b.costRisk || 50), 0) / total).toFixed(1)) : 50;
+      const avgT = total > 0 ? Number((stateProjs.reduce((a, b) => a + Number(b.timeRisk || 50), 0) / total).toFixed(1)) : 50;
+      return {
+        ...stats,
+        totalProjects: total,
+        criticalProjects: crit,
+        highRisk: high,
+        mediumRisk: med,
+        lowRisk: low,
+        averageRiskScore: avgR,
+        averageCostRisk: avgC,
+        averageTimeRisk: avgT,
+        state: assignedState
+      };
+    }
+    return stats;
+  }, [stats, projects, isStateAuthority, assignedState]);
+
   return (
     <DashboardContext.Provider
       value={{
-        stats,
+        stats: effectiveStats,
         activeStateMetrics,
         projects,
         filteredProjects,

@@ -17,8 +17,8 @@ STANDARDIZED_STATES = [
     "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
     "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
     "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-    "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
-    "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+    "Andaman & Nicobar", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi", "Jammu & Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 ]
 
 STATE_ALIASES = {
@@ -29,7 +29,21 @@ STATE_ALIASES = {
     "pondicherry": "Puducherry",
     "uttaranchal": "Uttarakhand",
     "daman and diu": "Dadra and Nagar Haveli and Daman and Diu",
-    "dadra & nagar haveli": "Dadra and Nagar Haveli and Daman and Diu"
+    "dadra & nagar haveli": "Dadra and Nagar Haveli and Daman and Diu",
+    "jammu and kashmir": "Jammu & Kashmir",
+    "jammu & kashmir": "Jammu & Kashmir",
+    "jammu & kashmir (jk)": "Jammu & Kashmir",
+    "jammu and kashmir (jk)": "Jammu & Kashmir",
+    "j&k": "Jammu & Kashmir",
+    "jk": "Jammu & Kashmir",
+    "jammu_kashmir": "Jammu & Kashmir",
+    "jammu-kashmir": "Jammu & Kashmir",
+    "jammu": "Jammu & Kashmir",
+    "kashmir": "Jammu & Kashmir",
+    "andaman and nicobar": "Andaman & Nicobar",
+    "andaman & nicobar": "Andaman & Nicobar",
+    "andaman and nicobar islands": "Andaman & Nicobar",
+    "andaman & nicobar islands": "Andaman & Nicobar"
 }
 
 def normalize_state_name(raw_name: str) -> str:
@@ -53,15 +67,22 @@ def extract_project_states(state_field: str) -> list[str]:
     """
     if not state_field:
         return []
-    tokens = re.split(r'[,/;|]|\band\b|\b&\b', str(state_field), flags=re.IGNORECASE)
+    raw_tokens = re.split(r'[,;/|]', str(state_field))
     extracted = []
-    for t in tokens:
+    for t in raw_tokens:
         clean = t.strip()
         if not clean:
             continue
         norm = normalize_state_name(clean)
         if norm:
             extracted.append(norm)
+        else:
+            sub_tokens = re.split(r'\band\b|\b&\b', clean, flags=re.IGNORECASE)
+            for st in sub_tokens:
+                sub_clean = st.strip()
+                sub_norm = normalize_state_name(sub_clean)
+                if sub_norm:
+                    extracted.append(sub_norm)
     return list(dict.fromkeys(extracted))
 
 def project_matches_state(project_state_field: str, target_state: str) -> bool:

@@ -908,6 +908,171 @@ export const printSinglePmoDossier = (brief) => {
   }, 400);
 };
 
+/**
+ * Dynamic Sector-wise Risk Aggregation
+ */
+export const calculateSectorRiskData = (projectList) => {
+  if (!projectList || projectList.length === 0) return [];
+  const sectorGroups = {};
+
+  projectList.forEach((p) => {
+    const sector = p.sector || 'Other';
+    if (!sectorGroups[sector]) {
+      sectorGroups[sector] = {
+        sector,
+        totalProjects: 0,
+        critical: 0,
+        high: 0,
+        med: 0,
+        low: 0,
+        sumRisk: 0,
+        sumCostRisk: 0,
+        sumTimeRisk: 0,
+      };
+    }
+    const group = sectorGroups[sector];
+    group.totalProjects++;
+    const overallRisk = Number(p.overallRisk ?? p.overall_risk ?? 50);
+    const costRisk = Number(p.costRisk ?? p.cost_risk ?? 50);
+    const timeRisk = Number(p.timeRisk ?? p.time_risk ?? 50);
+
+    group.sumRisk += overallRisk;
+    group.sumCostRisk += costRisk;
+    group.sumTimeRisk += timeRisk;
+
+    if (p.riskLevel === 'CRITICAL') group.critical++;
+    else if (p.riskLevel === 'HIGH') group.high++;
+    else if (p.riskLevel === 'MEDIUM') group.med++;
+    else group.low++;
+  });
+
+  return Object.values(sectorGroups)
+    .map((g) => ({
+      sector: g.sector,
+      totalProjects: g.totalProjects,
+      avgRisk: Number((g.sumRisk / g.totalProjects).toFixed(1)),
+      costRisk: Number((g.sumCostRisk / g.totalProjects).toFixed(1)),
+      timeRisk: Number((g.sumTimeRisk / g.totalProjects).toFixed(1)),
+      critical: g.critical,
+      high: g.high,
+      med: g.med,
+      low: g.low,
+    }))
+    .sort((a, b) => b.avgRisk - a.avgRisk);
+};
+
+/**
+ * Dynamic Ministry-wise Risk Aggregation
+ */
+export const calculateMinistryRiskData = (projectList) => {
+  if (!projectList || projectList.length === 0) return [];
+  const ministryGroups = {};
+
+  projectList.forEach((p) => {
+    const ministry = p.ministry || 'Other Ministry';
+    if (!ministryGroups[ministry]) {
+      ministryGroups[ministry] = {
+        ministry,
+        totalProjects: 0,
+        critical: 0,
+        high: 0,
+        med: 0,
+        low: 0,
+        sumRisk: 0,
+      };
+    }
+    const group = ministryGroups[ministry];
+    group.totalProjects++;
+    const overallRisk = Number(p.overallRisk ?? p.overall_risk ?? 50);
+    group.sumRisk += overallRisk;
+
+    if (p.riskLevel === 'CRITICAL') group.critical++;
+    else if (p.riskLevel === 'HIGH') group.high++;
+    else if (p.riskLevel === 'MEDIUM') group.med++;
+    else group.low++;
+  });
+
+  return Object.values(ministryGroups)
+    .map((g) => ({
+      ministry: g.ministry,
+      totalProjects: g.totalProjects,
+      avgRisk: Number((g.sumRisk / g.totalProjects).toFixed(1)),
+      critical: g.critical,
+      criticalPercent: Number(((g.critical / g.totalProjects) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b.avgRisk - a.avgRisk);
+};
+
+/**
+ * Dynamic State-wise Risk Distribution Aggregation
+ * If isStateAuthority is true, returns ONLY the single authorized state.
+ */
+export const calculateStateRiskData = (projectList, isStateAuthority = false, assignedState = null) => {
+  if (!projectList || projectList.length === 0) return [];
+
+  if (isStateAuthority && assignedState) {
+    const targetNorm = normalizeStateName(assignedState);
+    const stateProjects = projectList.filter((p) => isProjectInState(p, targetNorm));
+    const total = stateProjects.length;
+    const critical = stateProjects.filter((p) => p.riskLevel === 'CRITICAL').length;
+    const high = stateProjects.filter((p) => p.riskLevel === 'HIGH').length;
+    const med = stateProjects.filter((p) => p.riskLevel === 'MEDIUM').length;
+    const low = stateProjects.filter((p) => p.riskLevel === 'LOW').length;
+    const avgRisk = total > 0 ? Number((stateProjects.reduce((acc, p) => acc + Number(p.overallRisk || 50), 0) / total).toFixed(1)) : 50.0;
+
+    return [
+      {
+        state: targetNorm,
+        projects: total,
+        critical,
+        high,
+        med,
+        low,
+        avgRisk
+      }
+    ];
+  }
+
+  // Central Authority: Aggregate across all states in portfolio
+  const stateGroups = {};
+  projectList.forEach((p) => {
+    const pStates = extractProjectStates(p.state);
+    pStates.forEach((st) => {
+      const normSt = normalizeStateName(st);
+      if (!stateGroups[normSt]) {
+        stateGroups[normSt] = {
+          state: normSt,
+          projects: 0,
+          critical: 0,
+          high: 0,
+          med: 0,
+          low: 0,
+          sumRisk: 0,
+        };
+      }
+      const group = stateGroups[normSt];
+      group.projects++;
+      group.sumRisk += Number(p.overallRisk || 50);
+      if (p.riskLevel === 'CRITICAL') group.critical++;
+      else if (p.riskLevel === 'HIGH') group.high++;
+      else if (p.riskLevel === 'MEDIUM') group.med++;
+      else group.low++;
+    });
+  });
+
+  return Object.values(stateGroups)
+    .map((g) => ({
+      state: g.state,
+      projects: g.projects,
+      critical: g.critical,
+      high: g.high,
+      med: g.med,
+      low: g.low,
+      avgRisk: g.projects > 0 ? Number((g.sumRisk / g.projects).toFixed(1)) : 50.0
+    }))
+    .sort((a, b) => b.projects - a.projects);
+};
+
 
 
 

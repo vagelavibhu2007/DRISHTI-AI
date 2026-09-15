@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { MOCK_PROJECTS, DASHBOARD_STATS, EARLY_WARNING_ALERTS } from '../data/mockData';
+import { isProjectInState } from '../utils/riskUtils';
 
 const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
@@ -141,8 +142,7 @@ export const api = {
       try {
         let projects = [...MOCK_PROJECTS];
         if (params.state && params.state !== 'ALL') {
-          const norm = String(params.state).toLowerCase();
-          projects = projects.filter(p => p.state && p.state.toLowerCase().includes(norm));
+          projects = projects.filter(p => isProjectInState(p, params.state));
         }
         if (params.sector && params.sector !== 'ALL' && params.sector !== 'All Sectors') {
           projects = projects.filter(p => p.sector && p.sector.toLowerCase() === params.sector.toLowerCase());

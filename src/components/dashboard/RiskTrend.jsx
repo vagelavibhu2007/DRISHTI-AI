@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -11,12 +11,44 @@ import {
 } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { RISK_TREND_6M, RISK_TREND_12M } from '../../data/mockData';
+import { useDashboard } from '../../context/DashboardContext';
+import { isProjectInState } from '../../utils/riskUtils';
+import { RISK_TREND_6M, RISK_TREND_12M, MOCK_PROJECTS } from '../../data/mockData';
 
 export const RiskTrend = () => {
   const [period, setPeriod] = useState('6M'); // '6M' or '12M'
   const { isStateAuthority, assignedState } = useAuth();
-  const data = period === '6M' ? RISK_TREND_6M : RISK_TREND_12M;
+  const { projects } = useDashboard();
+
+  const data = useMemo(() => {
+    if (isStateAuthority && assignedState) {
+      const raw = Array.isArray(projects) && projects.length > 0 ? projects : MOCK_PROJECTS;
+      const stateProjs = raw.filter((p) => isProjectInState(p, assignedState));
+      const total = stateProjs.length;
+      const critical = stateProjs.filter((p) => p.riskLevel === 'CRITICAL').length;
+      const avgRisk = total > 0 ? Number((stateProjs.reduce((a, b) => a + Number(b.overallRisk || 50), 0) / total).toFixed(1)) : 50;
+      const avgCost = total > 0 ? Number((stateProjs.reduce((a, b) => a + Number(b.costRisk || 50), 0) / total).toFixed(1)) : 50;
+      const avgTime = total > 0 ? Number((stateProjs.reduce((a, b) => a + Number(b.timeRisk || 50), 0) / total).toFixed(1)) : 50;
+
+      const histMonths = [
+        'Sep 2025', 'Oct 2025', 'Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026',
+        'Mar 2026', 'Apr 2026', 'May 2026', 'Jun 2026', 'Jul 2026', 'Aug 2026'
+      ];
+      const deltas = [-0.125, -0.112, -0.100, -0.082, -0.073, -0.063, -0.058, -0.039, -0.016, 0.010, 0.002, 0.0];
+
+      const all12m = histMonths.map((m, idx) => ({
+        month: m,
+        overallRisk: Number(Math.max(5, Math.min(99, avgRisk * (1.0 + deltas[idx]))).toFixed(1)),
+        costRisk: Number(Math.max(5, Math.min(99, avgCost * (1.0 + deltas[idx] * 1.05))).toFixed(1)),
+        timeRisk: Number(Math.max(5, Math.min(99, avgTime * (1.0 + deltas[idx] * 0.95))).toFixed(1)),
+        criticalCount: Math.max(0, Math.round(critical * (1.0 + deltas[idx] * 1.5)))
+      }));
+
+      return period === '6M' ? all12m.slice(6) : all12m;
+    }
+
+    return period === '6M' ? RISK_TREND_6M : RISK_TREND_12M;
+  }, [period, isStateAuthority, assignedState, projects]);
 
   const CustomTrendTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
