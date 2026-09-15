@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -19,13 +19,21 @@ import { useDashboard } from '../context/DashboardContext';
 import { RISK_TREND_12M, SECTOR_RISK_DATA } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { STANDARDIZED_STATES } from '../utils/riskUtils';
 
 export const PredictionTrends = () => {
   const { stats } = useDashboard();
-  const { assignedState } = useAuth();
+  const { user, isCentralAuthority, isStateAuthority, assignedState } = useAuth();
+  const isCentral = isCentralAuthority || (!isStateAuthority && user?.authority_type !== 'STATE_AUTHORITY');
+
   const [timePeriod, setTimePeriod] = useState('12M');
+  const [selectedState, setSelectedState] = useState('ALL');
   const [selectedSector, setSelectedSector] = useState('ALL');
   const [selectedMinistry, setSelectedMinistry] = useState('ALL');
+
+  const sortedStates = useMemo(() => {
+    return [...STANDARDIZED_STATES].sort();
+  }, []);
 
   const [trendData, setTrendData] = useState([]);
   const [metrics, setMetrics] = useState({
@@ -45,11 +53,19 @@ export const PredictionTrends = () => {
 
     const fetchTrends = async () => {
       try {
-        const res = await api.getRiskTrends({
+        const queryParams = {
           horizon: timePeriod,
           sector: selectedSector,
           ministry: selectedMinistry
-        });
+        };
+
+        if (isStateAuthority && assignedState) {
+          queryParams.state = assignedState;
+        } else if (isCentral && selectedState !== 'ALL') {
+          queryParams.state = selectedState;
+        }
+
+        const res = await api.getRiskTrends(queryParams);
 
         if (!isMounted) return;
 
@@ -94,7 +110,7 @@ export const PredictionTrends = () => {
     return () => {
       isMounted = false;
     };
-  }, [timePeriod, selectedSector, selectedMinistry, assignedState]);
+  }, [timePeriod, selectedSector, selectedMinistry, selectedState, isCentral, isStateAuthority, assignedState]);
 
   const CustomTrendTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -123,7 +139,7 @@ export const PredictionTrends = () => {
     <div className="h-64 w-full flex flex-col items-center justify-center text-slate-400 p-4 border border-dashed border-slate-200 rounded-lg">
       <AlertCircle className="w-8 h-8 text-slate-300 mb-2" />
       <p className="text-xs font-semibold text-slate-600">No projects match the selected filters.</p>
-      <p className="text-[11px] text-slate-400 mt-0.5">Try selecting "All Sectors" or "All Ministries".</p>
+      <p className="text-[11px] text-slate-400 mt-0.5">Try selecting "All States", "All Sectors" or "All Ministries".</p>
     </div>
   );
 
@@ -151,6 +167,22 @@ export const PredictionTrends = () => {
               </button>
             ))}
           </div>
+
+          {/* State Filter Dropdown - Only available in Central Authority */}
+          {isCentral && (
+            <select
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-gov-700/20"
+            >
+              <option value="ALL">All States</option>
+              {sortedStates.map((st) => (
+                <option key={st} value={st}>
+                  {st}
+                </option>
+              ))}
+            </select>
+          )}
 
           <select
             value={selectedSector}
@@ -191,8 +223,6 @@ export const PredictionTrends = () => {
             </div>
           )}
         </div>
-
-        <span className="text-xs text-slate-400 font-mono">Model: Bi-LSTM + GBDT Horizon Estimator</span>
       </div>
 
       {/* Grid of 4 Trend Charts */}

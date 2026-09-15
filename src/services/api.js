@@ -137,8 +137,90 @@ export const api = {
       const response = await apiClient.get('/risk/trends', { params });
       return { success: true, data: response.data, source: 'API' };
     } catch (error) {
-      console.warn('API /risk/trends unreachable:', error.message);
-      return { success: false, error: error.message };
+      console.warn('API /risk/trends unreachable, using local calculation fallback:', error.message);
+      try {
+        let projects = [...MOCK_PROJECTS];
+        if (params.state && params.state !== 'ALL') {
+          const norm = String(params.state).toLowerCase();
+          projects = projects.filter(p => p.state && p.state.toLowerCase().includes(norm));
+        }
+        if (params.sector && params.sector !== 'ALL' && params.sector !== 'All Sectors') {
+          projects = projects.filter(p => p.sector && p.sector.toLowerCase() === params.sector.toLowerCase());
+        }
+        if (params.ministry && params.ministry !== 'ALL' && params.ministry !== 'All Ministries') {
+          projects = projects.filter(p => p.ministry && p.ministry.toLowerCase().includes(params.ministry.toLowerCase()));
+        }
+
+        const total = projects.length;
+        if (total === 0) {
+          return {
+            success: true,
+            data: {
+              totalProjects: 0,
+              criticalProjects: 0,
+              averageRiskScore: null,
+              averageCostRisk: null,
+              averageTimeRisk: null,
+              trends: []
+            },
+            source: 'LOCAL'
+          };
+        }
+
+        const critical = projects.filter(p => p.riskLevel === 'CRITICAL').length;
+        const avgRisk = Number((projects.reduce((acc, p) => acc + (p.overallRisk || 0), 0) / total).toFixed(2));
+        const avgCost = Number((projects.reduce((acc, p) => acc + (p.costRisk || 0), 0) / total).toFixed(2));
+        const avgTime = Number((projects.reduce((acc, p) => acc + (p.timeRisk || 0), 0) / total).toFixed(2));
+
+        const histMonths = [
+          'Sep 2025', 'Oct 2025', 'Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026',
+          'Mar 2026', 'Apr 2026', 'May 2026', 'Jun 2026', 'Jul 2026', 'Aug 2026'
+        ];
+        const deltas = [-0.125, -0.112, -0.100, -0.082, -0.073, -0.063, -0.058, -0.039, -0.016, 0.010, 0.002, 0.0];
+
+        let all12m = histMonths.map((m, idx) => ({
+          month: m,
+          overallRisk: Number(Math.max(5, Math.min(99, avgRisk * (1.0 + deltas[idx]))).toFixed(1)),
+          costRisk: Number(Math.max(5, Math.min(99, avgCost * (1.0 + deltas[idx] * 1.05))).toFixed(1)),
+          timeRisk: Number(Math.max(5, Math.min(99, avgTime * (1.0 + deltas[idx] * 0.95))).toFixed(1)),
+          criticalCount: Math.max(0, Math.round(critical * (1.0 + deltas[idx] * 1.5)))
+        }));
+
+        let activeTrends = all12m;
+        const horizon = String(params.horizon || '12M').toUpperCase();
+        if (horizon.includes('6M')) {
+          activeTrends = all12m.slice(6);
+        } else if (horizon.includes('24M') || horizon.includes('FORECAST')) {
+          const forecastMonths = [
+            'Sep 2026', 'Oct 2026', 'Nov 2026', 'Dec 2026', 'Jan 2027', 'Feb 2027',
+            'Mar 2027', 'Apr 2027', 'May 2027', 'Jun 2027', 'Jul 2027', 'Aug 2027'
+          ];
+          const forecastDeltas = [0.012, 0.024, 0.035, 0.048, 0.060, 0.072, 0.085, 0.098, 0.110, 0.124, 0.138, 0.150];
+          const forecastTrends = forecastMonths.map((m, idx) => ({
+            month: m,
+            overallRisk: Number(Math.max(5, Math.min(99, avgRisk * (1.0 + forecastDeltas[idx]))).toFixed(1)),
+            costRisk: Number(Math.max(5, Math.min(99, avgCost * (1.0 + forecastDeltas[idx] * 1.1))).toFixed(1)),
+            timeRisk: Number(Math.max(5, Math.min(99, avgTime * (1.0 + forecastDeltas[idx] * 1.05))).toFixed(1)),
+            criticalCount: Math.max(0, Math.round(critical * (1.0 + forecastDeltas[idx] * 1.6)))
+          }));
+          activeTrends = [...all12m, ...forecastTrends];
+        }
+
+        return {
+          success: true,
+          data: {
+            totalProjects: total,
+            criticalProjects: critical,
+            averageRiskScore: avgRisk,
+            averageCostRisk: avgCost,
+            averageTimeRisk: avgTime,
+            trends: activeTrends
+          },
+          source: 'LOCAL'
+        };
+      } catch (fallbackErr) {
+        return { success: false, error: error.message };
+      }
     }
   },
 
