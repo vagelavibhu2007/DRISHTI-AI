@@ -82,6 +82,27 @@ export const ProjectFilters = ({ showCount = true, resultsCount = 0 }) => {
         { value: 'Telangana', label: 'Telangana' },
       ];
 
+  const effectiveMinistryOptions = useMemo(() => {
+    if (selectedMinistryFilter !== 'ALL' && !ministryOptions.some(o => o.value.toLowerCase() === selectedMinistryFilter.toLowerCase())) {
+      return [...ministryOptions, { value: selectedMinistryFilter, label: selectedMinistryFilter }];
+    }
+    return ministryOptions;
+  }, [selectedMinistryFilter]);
+
+  const effectiveSectorOptions = useMemo(() => {
+    if (selectedSectorFilter !== 'ALL' && !sectorOptions.some(o => o.value.toLowerCase() === selectedSectorFilter.toLowerCase())) {
+      return [...sectorOptions, { value: selectedSectorFilter, label: selectedSectorFilter }];
+    }
+    return sectorOptions;
+  }, [selectedSectorFilter]);
+
+  const effectiveStateOptions = useMemo(() => {
+    if (selectedStateFilter !== 'ALL' && !stateOptions.some(o => o.value.toLowerCase() === selectedStateFilter.toLowerCase())) {
+      return [...stateOptions, { value: selectedStateFilter, label: selectedStateFilter }];
+    }
+    return stateOptions;
+  }, [selectedStateFilter, stateOptions]);
+
   return (
     <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200/90 shadow-card space-y-4">
       {/* Top Search Bar */}
@@ -117,21 +138,21 @@ export const ProjectFilters = ({ showCount = true, resultsCount = 0 }) => {
           label="Ministry"
           value={selectedMinistryFilter}
           onChange={setSelectedMinistryFilter}
-          options={ministryOptions}
+          options={effectiveMinistryOptions}
           icon={Building2}
         />
         <FilterDropdown
           label="Sector"
           value={selectedSectorFilter}
           onChange={setSelectedSectorFilter}
-          options={sectorOptions}
+          options={effectiveSectorOptions}
           icon={Layers}
         />
         <FilterDropdown
           label="State"
           value={selectedStateFilter}
           onChange={setSelectedStateFilter}
-          options={stateOptions}
+          options={effectiveStateOptions}
           icon={MapPin}
         />
       </div>

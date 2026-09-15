@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
   Bar,
@@ -20,7 +21,15 @@ import {
 import { SECTOR_RISK_DATA, STATE_RISK_DATA, MINISTRY_RISK_DATA, MOCK_PROJECTS } from '../../data/mockData';
 
 export const SectorRiskChart = () => {
-  const { projects: contextProjects } = useDashboard();
+  const navigate = useNavigate();
+  const {
+    projects: contextProjects,
+    setSelectedSectorFilter,
+    setSelectedMinistryFilter,
+    setSelectedStateFilter,
+    setSelectedRiskFilter,
+    setSearchQuery
+  } = useDashboard();
   const { isStateAuthority, assignedState } = useAuth();
 
   const scopedProjects = useMemo(() => {
@@ -37,6 +46,19 @@ export const SectorRiskChart = () => {
     return dynamic || [];
   }, [scopedProjects, isStateAuthority]);
 
+  const handleSectorClick = (entry) => {
+    const sectorName = entry?.sector || entry?.payload?.sector || (typeof entry === 'string' ? entry : null);
+    if (!sectorName) return;
+    setSelectedMinistryFilter('ALL');
+    setSelectedRiskFilter('ALL');
+    setSearchQuery('');
+    if (isStateAuthority && assignedState) {
+      setSelectedStateFilter(assignedState);
+    }
+    setSelectedSectorFilter(sectorName);
+    navigate('/projects');
+  };
+
   const CustomSectorTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const item = payload[0].payload;
@@ -49,6 +71,9 @@ export const SectorRiskChart = () => {
           <div className="text-slate-300">Time Overrun Risk: <span className="font-mono font-bold text-orange-400">{item.timeRisk}%</span></div>
           <div className="pt-1 text-[10px] text-red-400 font-bold border-t border-slate-800">
             Critical Assets: {item.critical} ({item.totalProjects > 0 ? ((item.critical / item.totalProjects) * 100).toFixed(1) : 0}%)
+          </div>
+          <div className="pt-1 text-[10px] text-sky-300 font-medium italic">
+            Click to view {label} projects →
           </div>
         </div>
       );
@@ -78,6 +103,12 @@ export const SectorRiskChart = () => {
               data={data}
               layout="vertical"
               margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+              onClick={(e) => {
+                if (e && e.activePayload && e.activePayload.length) {
+                  handleSectorClick(e.activePayload[0].payload);
+                }
+              }}
+              className="cursor-pointer"
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F1F5F9" />
               <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: '#64748B' }} />
@@ -91,8 +122,8 @@ export const SectorRiskChart = () => {
               />
               <Tooltip content={<CustomSectorTooltip />} />
               <Legend verticalAlign="top" wrapperStyle={{ paddingBottom: '8px', fontSize: '11px' }} />
-              <Bar dataKey="avgRisk" name="Avg Risk Score" fill="#1E3A5F" radius={[0, 4, 4, 0]} />
-              <Bar dataKey="costRisk" name="Cost Risk (%)" fill="#EF4444" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="avgRisk" name="Avg Risk Score" fill="#1E3A5F" radius={[0, 4, 4, 0]} cursor="pointer" onClick={handleSectorClick} />
+              <Bar dataKey="costRisk" name="Cost Risk (%)" fill="#EF4444" radius={[0, 4, 4, 0]} cursor="pointer" onClick={handleSectorClick} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -102,7 +133,15 @@ export const SectorRiskChart = () => {
 };
 
 export const StateRiskChart = () => {
-  const { projects: contextProjects } = useDashboard();
+  const navigate = useNavigate();
+  const {
+    projects: contextProjects,
+    setSelectedSectorFilter,
+    setSelectedMinistryFilter,
+    setSelectedStateFilter,
+    setSelectedRiskFilter,
+    setSearchQuery
+  } = useDashboard();
   const { isStateAuthority, assignedState } = useAuth();
 
   const scopedProjects = useMemo(() => {
@@ -118,6 +157,33 @@ export const StateRiskChart = () => {
     const dynamic = calculateStateRiskData(scopedProjects, isStateAuthority, assignedState);
     return dynamic || [];
   }, [scopedProjects, isStateAuthority, assignedState]);
+
+  const handleStateClick = (entry) => {
+    const stateName = entry?.state || entry?.payload?.state || (typeof entry === 'string' ? entry : null);
+    if (!stateName) return;
+    if (!isStateAuthority) {
+      setSelectedStateFilter(stateName);
+    }
+    setSelectedSectorFilter('ALL');
+    setSelectedMinistryFilter('ALL');
+    setSelectedRiskFilter('ALL');
+    setSearchQuery('');
+    navigate('/projects');
+  };
+
+  const handleRiskTierClick = (riskTierName) => {
+    if (riskTierName.includes('Critical')) setSelectedRiskFilter('CRITICAL');
+    else if (riskTierName.includes('High')) setSelectedRiskFilter('HIGH');
+    else if (riskTierName.includes('Medium')) setSelectedRiskFilter('MEDIUM');
+    else if (riskTierName.includes('Low')) setSelectedRiskFilter('LOW');
+    if (isStateAuthority && assignedState) {
+      setSelectedStateFilter(assignedState);
+    }
+    setSelectedSectorFilter('ALL');
+    setSelectedMinistryFilter('ALL');
+    setSearchQuery('');
+    navigate('/projects');
+  };
 
   const singleStateTierData = useMemo(() => {
     if (isStateAuthority && data.length === 1) {
@@ -175,7 +241,12 @@ export const StateRiskChart = () => {
           <div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
               {singleStateTierData.map((tier) => (
-                <div key={tier.name} className="p-3 rounded-lg border border-slate-100 bg-slate-50/80 flex items-center justify-between">
+                <div
+                  key={tier.name}
+                  onClick={() => handleRiskTierClick(tier.name)}
+                  title={`Click to view ${tier.name} projects in ${assignedState}`}
+                  className="p-3 rounded-lg border border-slate-100 bg-slate-50/80 hover:bg-slate-100 hover:border-slate-300 hover:shadow-sm cursor-pointer transition flex items-center justify-between"
+                >
                   <div>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">{tier.name}</span>
                     <span className="text-lg font-extrabold text-slate-800 font-mono">{tier.count}</span>
@@ -196,6 +267,7 @@ export const StateRiskChart = () => {
                   data={data}
                   margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
                   barGap={4}
+                  className="cursor-pointer"
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                   <XAxis
@@ -215,10 +287,10 @@ export const StateRiskChart = () => {
                     contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', color: '#FFF', borderRadius: '8px', fontSize: '12px' }}
                   />
                   <Legend verticalAlign="top" wrapperStyle={{ paddingBottom: '14px', fontSize: '11px' }} />
-                  <Bar dataKey="critical" name="Critical Risk" fill="#EF4444" barSize={40} radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="high" name="High Risk" fill="#F97316" barSize={40} radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="med" name="Medium Risk" fill="#F59E0B" barSize={40} radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="low" name="Low Risk" fill="#10B981" barSize={40} radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="critical" name="Critical Risk" fill="#EF4444" barSize={40} radius={[6, 6, 0, 0]} cursor="pointer" onClick={() => handleRiskTierClick('Critical Risk')} />
+                  <Bar dataKey="high" name="High Risk" fill="#F97316" barSize={40} radius={[6, 6, 0, 0]} cursor="pointer" onClick={() => handleRiskTierClick('High Risk')} />
+                  <Bar dataKey="med" name="Medium Risk" fill="#F59E0B" barSize={40} radius={[6, 6, 0, 0]} cursor="pointer" onClick={() => handleRiskTierClick('Medium Risk')} />
+                  <Bar dataKey="low" name="Low Risk" fill="#10B981" barSize={40} radius={[6, 6, 0, 0]} cursor="pointer" onClick={() => handleRiskTierClick('Low Risk')} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -230,6 +302,12 @@ export const StateRiskChart = () => {
               <BarChart
                 data={STATE_RISK_DATA}
                 margin={{ top: 10, right: 10, left: -15, bottom: 25 }}
+                onClick={(e) => {
+                  if (e && e.activePayload && e.activePayload.length) {
+                    handleStateClick(e.activePayload[0].payload);
+                  }
+                }}
+                className="cursor-pointer"
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                 <XAxis
@@ -241,14 +319,14 @@ export const StateRiskChart = () => {
                 />
                 <YAxis tick={{ fontSize: 10, fill: '#64748B' }} />
                 <Tooltip
-                  formatter={(value, name) => [`${value} Projects`, name]}
+                  formatter={(value, name, item) => [`${value} Projects (${item?.payload?.state || ''})`, name]}
                   contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', color: '#FFF', borderRadius: '8px', fontSize: '12px' }}
                 />
                 <Legend verticalAlign="top" wrapperStyle={{ paddingBottom: '8px', fontSize: '11px' }} />
-                <Bar dataKey="critical" name="Critical Risk" stackId="a" fill="#EF4444" />
-                <Bar dataKey="high" name="High Risk" stackId="a" fill="#F97316" />
-                <Bar dataKey="med" name="Medium Risk" stackId="a" fill="#F59E0B" />
-                <Bar dataKey="low" name="Low Risk" stackId="a" fill="#10B981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="critical" name="Critical Risk" stackId="a" fill="#EF4444" cursor="pointer" onClick={handleStateClick} />
+                <Bar dataKey="high" name="High Risk" stackId="a" fill="#F97316" cursor="pointer" onClick={handleStateClick} />
+                <Bar dataKey="med" name="Medium Risk" stackId="a" fill="#F59E0B" cursor="pointer" onClick={handleStateClick} />
+                <Bar dataKey="low" name="Low Risk" stackId="a" fill="#10B981" radius={[4, 4, 0, 0]} cursor="pointer" onClick={handleStateClick} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -259,7 +337,15 @@ export const StateRiskChart = () => {
 };
 
 export const MinistryRiskChart = () => {
-  const { projects: contextProjects } = useDashboard();
+  const navigate = useNavigate();
+  const {
+    projects: contextProjects,
+    setSelectedSectorFilter,
+    setSelectedMinistryFilter,
+    setSelectedStateFilter,
+    setSelectedRiskFilter,
+    setSearchQuery
+  } = useDashboard();
   const { isStateAuthority, assignedState } = useAuth();
 
   const scopedProjects = useMemo(() => {
@@ -275,6 +361,36 @@ export const MinistryRiskChart = () => {
     const dynamic = calculateMinistryRiskData(scopedProjects);
     return dynamic || [];
   }, [scopedProjects, isStateAuthority]);
+
+  const handleMinistryClick = (entry) => {
+    const ministryName = entry?.ministry || entry?.payload?.ministry || (typeof entry === 'string' ? entry : null);
+    if (!ministryName) return;
+    setSelectedSectorFilter('ALL');
+    setSelectedRiskFilter('ALL');
+    setSearchQuery('');
+    if (isStateAuthority && assignedState) {
+      setSelectedStateFilter(assignedState);
+    }
+    setSelectedMinistryFilter(ministryName);
+    navigate('/projects');
+  };
+
+  const CustomMinistryTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const val = payload[0].value;
+      const name = payload[0].name;
+      return (
+        <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl text-xs space-y-1 border border-slate-700">
+          <div className="font-bold text-sky-300 text-sm">{label}</div>
+          <div className="text-slate-300">{name}: <span className="font-mono font-bold text-white">{val}</span></div>
+          <div className="pt-1 text-[10px] text-sky-300 font-medium italic">
+            Click to view {label} projects →
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200/90 shadow-card">
@@ -298,6 +414,12 @@ export const MinistryRiskChart = () => {
               data={data}
               layout="vertical"
               margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+              onClick={(e) => {
+                if (e && e.activePayload && e.activePayload.length) {
+                  handleMinistryClick(e.activePayload[0].payload);
+                }
+              }}
+              className="cursor-pointer"
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F1F5F9" />
               <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: '#64748B' }} />
@@ -309,13 +431,10 @@ export const MinistryRiskChart = () => {
                 width={180}
                 axisLine={{ stroke: '#E2E8F0' }}
               />
-              <Tooltip
-                formatter={(val, name) => [`${val}${name.includes('Percent') ? '%' : ''}`, name]}
-                contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', color: '#FFF', borderRadius: '8px', fontSize: '12px' }}
-              />
+              <Tooltip content={<CustomMinistryTooltip />} />
               <Legend verticalAlign="top" wrapperStyle={{ paddingBottom: '8px', fontSize: '11px' }} />
-              <Bar dataKey="avgRisk" name="Avg Risk Index" fill="#2563EB" radius={[0, 4, 4, 0]} />
-              <Bar dataKey="criticalPercent" name="Critical % Ratio" fill="#DC2626" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="avgRisk" name="Avg Risk Index" fill="#2563EB" radius={[0, 4, 4, 0]} cursor="pointer" onClick={handleMinistryClick} />
+              <Bar dataKey="criticalPercent" name="Critical % Ratio" fill="#DC2626" radius={[0, 4, 4, 0]} cursor="pointer" onClick={handleMinistryClick} />
             </BarChart>
           </ResponsiveContainer>
         )}

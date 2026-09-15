@@ -123,11 +123,19 @@ export const DashboardProvider = ({ children }) => {
       if (selectedRiskFilter !== 'ALL' && p.riskLevel !== selectedRiskFilter) {
         return false;
       }
-      if (selectedMinistryFilter !== 'ALL' && p.ministry !== selectedMinistryFilter) {
-        return false;
+      if (selectedMinistryFilter !== 'ALL') {
+        const pMin = String(p.ministry || '').toLowerCase().trim();
+        const selMin = String(selectedMinistryFilter).toLowerCase().trim();
+        if (pMin !== selMin && !pMin.includes(selMin) && !selMin.includes(pMin)) {
+          return false;
+        }
       }
-      if (selectedSectorFilter !== 'ALL' && p.sector !== selectedSectorFilter) {
-        return false;
+      if (selectedSectorFilter !== 'ALL') {
+        const pSec = String(p.sector || '').toLowerCase().trim();
+        const selSec = String(selectedSectorFilter).toLowerCase().trim();
+        if (pSec !== selSec && !pSec.includes(selSec) && !selSec.includes(pSec)) {
+          return false;
+        }
       }
       if (selectedStateFilter !== 'ALL' && !isProjectInState(p, selectedStateFilter)) {
         return false;
