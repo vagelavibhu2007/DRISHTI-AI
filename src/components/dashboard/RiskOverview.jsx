@@ -7,7 +7,7 @@ import { ShieldAlert, ArrowRight } from 'lucide-react';
 
 export const RiskOverview = () => {
   const navigate = useNavigate();
-  const { stats, setSelectedRiskFilter } = useDashboard();
+  const { stats, selectedStateFilter, setSelectedRiskFilter } = useDashboard();
   const { isStateAuthority, assignedState } = useAuth();
 
   const handleRiskFilterClick = (level) => {
@@ -72,6 +72,12 @@ export const RiskOverview = () => {
     return null;
   };
 
+  const activeStateName = isStateAuthority && assignedState
+    ? assignedState
+    : selectedStateFilter && selectedStateFilter !== 'ALL'
+    ? selectedStateFilter
+    : null;
+
   return (
     <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200/90 shadow-card flex flex-col justify-between">
       {/* Header */}
@@ -82,8 +88,8 @@ export const RiskOverview = () => {
             Overall Project Risk
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            {isStateAuthority && assignedState
-              ? `${assignedState} distribution across ${total.toLocaleString()} monitored projects`
+            {activeStateName
+              ? `${activeStateName} distribution across ${total.toLocaleString()} monitored projects`
               : `National distribution across ${total.toLocaleString()} central sector projects`}
           </p>
         </div>

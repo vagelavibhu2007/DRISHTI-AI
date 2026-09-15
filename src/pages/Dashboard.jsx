@@ -11,9 +11,11 @@ import {
   ArrowRight,
   ShieldCheck,
   FileText,
-  Cpu
+  Cpu,
+  ChevronDown
 } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
+import { useAuth } from '../context/AuthContext';
 import PageContainer from '../components/layout/PageContainer';
 import KPICard from '../components/dashboard/KPICard';
 import RiskOverview from '../components/dashboard/RiskOverview';
@@ -26,6 +28,8 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const {
     stats,
+    selectedStateFilter,
+    setSelectedStateFilter,
     setSelectedRiskFilter,
     alerts,
     updateAlertStatus,
@@ -33,18 +37,48 @@ export const Dashboard = () => {
     setIsPredictionModalOpen
   } = useDashboard();
 
+  const {
+    user,
+    role,
+    isCentralAuthority,
+  } = useAuth();
+
+  const isCentralUser = (user?.role || role) === 'CENTRAL' || isCentralAuthority;
+
   return (
     <PageContainer
       title="Project Intelligence Dashboard"
       subtitle="AI-powered infrastructure project risk monitoring and early warning."
       action={
-        <button
-          onClick={() => setIsPredictionModalOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-gov-700 hover:bg-gov-800 rounded-lg shadow-sm transition"
-        >
-          <Cpu className="w-3.5 h-3.5 text-sky-300" />
-          <span>Run AI Risk Assessment</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          {/* Role-Based State Filter - ONLY rendered if user.role === 'CENTRAL' */}
+          {isCentralUser && (
+            <div className="relative inline-block">
+              <select
+                value={selectedStateFilter}
+                onChange={(e) => setSelectedStateFilter(e.target.value)}
+                aria-label="Filter by State"
+                className="appearance-none pl-3 pr-8 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-gov-700/20 focus:border-gov-700 transition cursor-pointer"
+              >
+                <option value="ALL">All States</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Gujarat">Gujarat</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Karnataka">Karnataka</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          )}
+
+          <button
+            onClick={() => setIsPredictionModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-gov-700 hover:bg-gov-800 rounded-lg shadow-sm transition"
+          >
+            <Cpu className="w-3.5 h-3.5 text-sky-300" />
+            <span>Run AI Risk Assessment</span>
+          </button>
+        </div>
       }
     >
       {/* Top KPI Cards Grid */}

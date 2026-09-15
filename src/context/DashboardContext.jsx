@@ -1,20 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
-import { DASHBOARD_STATS, MOCK_PROJECTS, EARLY_WARNING_ALERTS } from '../data/mockData';
+import {
+  DASHBOARD_STATS,
+  MOCK_PROJECTS,
+  EARLY_WARNING_ALERTS,
+  getStateDashboardMetrics,
+  DASHBOARD_STATE_METRICS
+} from '../data/mockData';
 import { isProjectInState } from '../utils/riskUtils';
 import { useAuth } from './AuthContext';
 
 const DashboardContext = createContext();
 
 export const DashboardProvider = ({ children }) => {
-  const { user, isStateAuthority, assignedState } = useAuth();
-
-  // Application Data State
-  const [stats, setStats] = useState(DASHBOARD_STATS);
-  const [projects, setProjects] = useState(MOCK_PROJECTS);
-  const [alerts, setAlerts] = useState(EARLY_WARNING_ALERTS);
-  const [modelInfo, setModelInfo] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user, isCentralAuthority, isStateAuthority, assignedState } = useAuth();
 
   // Global Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,14 +24,35 @@ export const DashboardProvider = ({ children }) => {
     return isStateAuthority && assignedState ? assignedState : 'ALL';
   });
 
+  // Active State Metrics for Dashboard
+  const activeStateMetrics = useMemo(() => {
+    const effectiveState = isStateAuthority && assignedState ? assignedState : selectedStateFilter;
+    return getStateDashboardMetrics(effectiveState);
+  }, [isStateAuthority, assignedState, selectedStateFilter]);
+
+  // Application Data State
+  const [stats, setStats] = useState(() => activeStateMetrics);
+  const [projects, setProjects] = useState(MOCK_PROJECTS);
+  const [alerts, setAlerts] = useState(EARLY_WARNING_ALERTS);
+  const [modelInfo, setModelInfo] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
   // Sync state filter when user authority changes
   useEffect(() => {
     if (isStateAuthority && assignedState) {
       setSelectedStateFilter(assignedState);
     } else if (!isStateAuthority) {
-      setSelectedStateFilter('ALL');
+      setSelectedStateFilter((prev) => (prev === assignedState ? 'ALL' : prev));
     }
   }, [isStateAuthority, assignedState]);
+
+  // Sync stats whenever activeStateMetrics changes
+  useEffect(() => {
+    setStats((prev) => ({
+      ...prev,
+      ...activeStateMetrics
+    }));
+  }, [activeStateMetrics]);
 
   // Modals & Drawers & Layout
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -148,6 +168,7 @@ export const DashboardProvider = ({ children }) => {
     <DashboardContext.Provider
       value={{
         stats,
+        activeStateMetrics,
         projects,
         filteredProjects,
         alerts,

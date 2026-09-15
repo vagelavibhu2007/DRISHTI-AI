@@ -22,9 +22,8 @@ import { api } from '../services/api';
 import { STANDARDIZED_STATES } from '../utils/riskUtils';
 
 export const PredictionTrends = () => {
-  const { stats } = useDashboard();
-  const { user, isCentralAuthority, isStateAuthority, assignedState } = useAuth();
-  const isCentral = isCentralAuthority || (!isStateAuthority && user?.authority_type !== 'STATE_AUTHORITY');
+  const { user, role, isCentralAuthority, isStateAuthority, assignedState } = useAuth();
+  const isCentral = (user?.role || role) === 'CENTRAL' || isCentralAuthority;
 
   const [timePeriod, setTimePeriod] = useState('12M');
   const [selectedState, setSelectedState] = useState('ALL');

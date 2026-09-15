@@ -5,13 +5,15 @@
 
 export const DASHBOARD_STATS = {
   totalProjects: 1966,
-  criticalProjects: 410,
-  highRisk: 640,
-  mediumRisk: 595,
-  lowRisk: 320,
+  criticalProjects: 332,
+  highRisk: 702,
+  mediumRisk: 618,
+  lowRisk: 314,
   averageRiskScore: 61.8,
   averageCostRisk: 64.2,
   averageTimeRisk: 59.4,
+  costSevere: 310,
+  timeSevere: 300,
   lastUpdated: '04 September 2026',
   totalMonitoredValueCr: 2486750,
   atRiskCapitalValueCr: 1142800,
@@ -20,11 +22,228 @@ export const DASHBOARD_STATS = {
   aiConfidenceIndex: 94.6
 };
 
+export const DASHBOARD_STATE_METRICS = {
+  ALL: {
+    state: 'All States',
+    totalProjects: 1966,
+    criticalProjects: 332,
+    highRisk: 702,
+    mediumRisk: 618,
+    lowRisk: 314,
+    averageRiskScore: 61.8,
+    averageCostRisk: 64.2,
+    averageTimeRisk: 59.4,
+    costSevere: 310,
+    timeSevere: 300,
+    costBins: [
+      { range: '0-20%', count: 240, label: 'Minimal Risk' },
+      { range: '21-40%', count: 380, label: 'Low Risk' },
+      { range: '41-60%', count: 520, label: 'Moderate Risk' },
+      { range: '61-80%', count: 516, label: 'High Risk' },
+      { range: '81-100%', count: 310, label: 'Severe (81-100%)' },
+    ],
+    timeBins: [
+      { range: '0-20%', count: 210, label: 'On Schedule' },
+      { range: '21-40%', count: 415, label: 'Minor Delay' },
+      { range: '41-60%', count: 495, label: 'Moderate Delay' },
+      { range: '61-80%', count: 546, label: 'High Delay' },
+      { range: '81-100%', count: 300, label: 'Severe Delay' },
+    ]
+  },
+  Maharashtra: {
+    state: 'Maharashtra',
+    totalProjects: 248,
+    criticalProjects: 64,
+    highRisk: 88,
+    mediumRisk: 62,
+    lowRisk: 34,
+    averageRiskScore: 68.4,
+    averageCostRisk: 71.2,
+    averageTimeRisk: 67.5,
+    costSevere: 48,
+    timeSevere: 42,
+    costBins: [
+      { range: '0-20%', count: 22, label: 'Minimal Risk' },
+      { range: '21-40%', count: 38, label: 'Low Risk' },
+      { range: '41-60%', count: 62, label: 'Moderate Risk' },
+      { range: '61-80%', count: 78, label: 'High Risk' },
+      { range: '81-100%', count: 48, label: 'Severe (81-100%)' },
+    ],
+    timeBins: [
+      { range: '0-20%', count: 24, label: 'On Schedule' },
+      { range: '21-40%', count: 42, label: 'Minor Delay' },
+      { range: '41-60%', count: 66, label: 'Moderate Delay' },
+      { range: '61-80%', count: 74, label: 'High Delay' },
+      { range: '81-100%', count: 42, label: 'Severe Delay' },
+    ]
+  },
+  Gujarat: {
+    state: 'Gujarat',
+    totalProjects: 190,
+    criticalProjects: 18,
+    highRisk: 44,
+    mediumRisk: 72,
+    lowRisk: 56,
+    averageRiskScore: 48.7,
+    averageCostRisk: 46.8,
+    averageTimeRisk: 44.2,
+    costSevere: 14,
+    timeSevere: 12,
+    costBins: [
+      { range: '0-20%', count: 42, label: 'Minimal Risk' },
+      { range: '21-40%', count: 58, label: 'Low Risk' },
+      { range: '41-60%', count: 48, label: 'Moderate Risk' },
+      { range: '61-80%', count: 28, label: 'High Risk' },
+      { range: '81-100%', count: 14, label: 'Severe (81-100%)' },
+    ],
+    timeBins: [
+      { range: '0-20%', count: 45, label: 'On Schedule' },
+      { range: '21-40%', count: 62, label: 'Minor Delay' },
+      { range: '41-60%', count: 45, label: 'Moderate Delay' },
+      { range: '61-80%', count: 26, label: 'High Delay' },
+      { range: '81-100%', count: 12, label: 'Severe Delay' },
+    ]
+  },
+  'Uttar Pradesh': {
+    state: 'Uttar Pradesh',
+    totalProjects: 310,
+    criticalProjects: 58,
+    highRisk: 104,
+    mediumRisk: 98,
+    lowRisk: 50,
+    averageRiskScore: 64.9,
+    averageCostRisk: 66.4,
+    averageTimeRisk: 62.8,
+    costSevere: 52,
+    timeSevere: 48,
+    costBins: [
+      { range: '0-20%', count: 35, label: 'Minimal Risk' },
+      { range: '21-40%', count: 55, label: 'Low Risk' },
+      { range: '41-60%', count: 82, label: 'Moderate Risk' },
+      { range: '61-80%', count: 86, label: 'High Risk' },
+      { range: '81-100%', count: 52, label: 'Severe (81-100%)' },
+    ],
+    timeBins: [
+      { range: '0-20%', count: 38, label: 'On Schedule' },
+      { range: '21-40%', count: 60, label: 'Minor Delay' },
+      { range: '41-60%', count: 84, label: 'Moderate Delay' },
+      { range: '61-80%', count: 80, label: 'High Delay' },
+      { range: '81-100%', count: 48, label: 'Severe Delay' },
+    ]
+  },
+  'Tamil Nadu': {
+    state: 'Tamil Nadu',
+    totalProjects: 180,
+    criticalProjects: 16,
+    highRisk: 41,
+    mediumRisk: 69,
+    lowRisk: 54,
+    averageRiskScore: 47.9,
+    averageCostRisk: 45.3,
+    averageTimeRisk: 43.8,
+    costSevere: 12,
+    timeSevere: 10,
+    costBins: [
+      { range: '0-20%', count: 40, label: 'Minimal Risk' },
+      { range: '21-40%', count: 56, label: 'Low Risk' },
+      { range: '41-60%', count: 48, label: 'Moderate Risk' },
+      { range: '61-80%', count: 24, label: 'High Risk' },
+      { range: '81-100%', count: 12, label: 'Severe (81-100%)' },
+    ],
+    timeBins: [
+      { range: '0-20%', count: 42, label: 'On Schedule' },
+      { range: '21-40%', count: 58, label: 'Minor Delay' },
+      { range: '41-60%', count: 46, label: 'Moderate Delay' },
+      { range: '61-80%', count: 24, label: 'High Delay' },
+      { range: '81-100%', count: 10, label: 'Severe Delay' },
+    ]
+  },
+  Karnataka: {
+    state: 'Karnataka',
+    totalProjects: 168,
+    criticalProjects: 15,
+    highRisk: 38,
+    mediumRisk: 66,
+    lowRisk: 49,
+    averageRiskScore: 46.8,
+    averageCostRisk: 44.5,
+    averageTimeRisk: 42.6,
+    costSevere: 11,
+    timeSevere: 9,
+    costBins: [
+      { range: '0-20%', count: 38, label: 'Minimal Risk' },
+      { range: '21-40%', count: 54, label: 'Low Risk' },
+      { range: '41-60%', count: 44, label: 'Moderate Risk' },
+      { range: '61-80%', count: 21, label: 'High Risk' },
+      { range: '81-100%', count: 11, label: 'Severe (81-100%)' },
+    ],
+    timeBins: [
+      { range: '0-20%', count: 40, label: 'On Schedule' },
+      { range: '21-40%', count: 56, label: 'Minor Delay' },
+      { range: '41-60%', count: 42, label: 'Moderate Delay' },
+      { range: '61-80%', count: 21, label: 'High Delay' },
+      { range: '81-100%', count: 9, label: 'Severe Delay' },
+    ]
+  }
+};
+
+export const getStateDashboardMetrics = (stateName) => {
+  if (!stateName || stateName === 'ALL' || stateName === 'All States') {
+    return DASHBOARD_STATE_METRICS.ALL;
+  }
+  if (DASHBOARD_STATE_METRICS[stateName]) {
+    return DASHBOARD_STATE_METRICS[stateName];
+  }
+  const foundState = STATE_RISK_DATA.find(
+    (s) => s.state.toLowerCase() === String(stateName).toLowerCase()
+  );
+  if (foundState) {
+    const total = foundState.projects;
+    const critical = foundState.critical;
+    const high = foundState.high;
+    const med = foundState.med;
+    const low = foundState.low;
+    const avgRisk = foundState.avgRisk;
+    const costAvg = Number((avgRisk * 1.04).toFixed(1));
+    const timeAvg = Number((avgRisk * 0.96).toFixed(1));
+    const cSev = Math.max(0, Math.round(critical * 0.75));
+    const tSev = Math.max(0, Math.round(critical * 0.65));
+    return {
+      state: foundState.state,
+      totalProjects: total,
+      criticalProjects: critical,
+      highRisk: high,
+      mediumRisk: med,
+      lowRisk: low,
+      averageRiskScore: avgRisk,
+      averageCostRisk: costAvg,
+      averageTimeRisk: timeAvg,
+      costSevere: cSev,
+      timeSevere: tSev,
+      costBins: [
+        { range: '0-20%', count: Math.round(low * 0.7), label: 'Minimal Risk' },
+        { range: '21-40%', count: Math.round(low * 0.3 + med * 0.4), label: 'Low Risk' },
+        { range: '41-60%', count: Math.round(med * 0.6 + high * 0.3), label: 'Moderate Risk' },
+        { range: '61-80%', count: Math.round(high * 0.7 + critical * 0.25), label: 'High Risk' },
+        { range: '81-100%', count: cSev, label: 'Severe (81-100%)' },
+      ],
+      timeBins: [
+        { range: '0-20%', count: Math.round(low * 0.75), label: 'On Schedule' },
+        { range: '21-40%', count: Math.round(low * 0.25 + med * 0.45), label: 'Minor Delay' },
+        { range: '41-60%', count: Math.round(med * 0.55 + high * 0.35), label: 'Moderate Delay' },
+        { range: '61-80%', count: Math.round(high * 0.65 + critical * 0.35), label: 'High Delay' },
+        { range: '81-100%', count: tSev, label: 'Severe Delay' },
+      ]
+    };
+  }
+  return DASHBOARD_STATE_METRICS.ALL;
+};
+
 export const RISK_DISTRIBUTION_DATA = [
-  { name: 'Critical', value: 410, color: '#EF4444', level: 'CRITICAL', percentage: '20.9%' },
-  { name: 'High', value: 640, color: '#F97316', level: 'HIGH', percentage: '32.6%' },
-  { name: 'Medium', value: 595, color: '#F59E0B', level: 'MEDIUM', percentage: '30.3%' },
-  { name: 'Low', value: 320, color: '#10B981', level: 'LOW', percentage: '16.3%' },
+  { name: 'Critical', value: 332, color: '#EF4444', level: 'CRITICAL', percentage: '16.9%' },
+  { name: 'High', value: 702, color: '#F97316', level: 'HIGH', percentage: '35.7%' },
+  { name: 'Medium', value: 618, color: '#F59E0B', level: 'MEDIUM', percentage: '31.4%' },
+  { name: 'Low', value: 314, color: '#10B981', level: 'LOW', percentage: '16.0%' },
 ];
 
 export const COST_RISK_DISTRIBUTION = [

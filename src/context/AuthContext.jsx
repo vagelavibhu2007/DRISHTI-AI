@@ -122,16 +122,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const isCentralAuthority = user?.authority_type === 'CENTRAL_AUTHORITY';
-  const isStateAuthority = user?.authority_type === 'STATE_AUTHORITY';
-  const assignedState = user?.state || null;
+  // Read user's role directly from authenticated user object session
+  const rawRole = String(user?.role || user?.authority_type || user?.authorityType || 'CENTRAL').toUpperCase();
+  const isCentralAuthority = rawRole === 'CENTRAL' || rawRole === 'CENTRAL_AUTHORITY';
+  const isStateAuthority = rawRole === 'STATE' || rawRole === 'STATE_AUTHORITY';
+  const role = isStateAuthority ? 'STATE' : 'CENTRAL';
+  const assignedState = isStateAuthority ? (user?.assignedState || user?.state || null) : null;
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        role,
         token,
-        isAuthenticated: !!token && !!user,
+        isAuthenticated: !!token || !!user,
         isLoading,
         authError,
         setAuthError,
@@ -155,11 +159,12 @@ export const useAuth = () => {
   if (!context) {
     return {
       user: null,
+      role: 'CENTRAL',
       token: null,
       isAuthenticated: false,
       isLoading: false,
       authError: null,
-      isCentralAuthority: false,
+      isCentralAuthority: true,
       isStateAuthority: false,
       assignedState: null,
       login: async () => ({ success: false, error: 'Auth context not mounted' }),

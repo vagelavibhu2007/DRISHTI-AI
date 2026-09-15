@@ -12,10 +12,24 @@ import { IndianRupee, Clock, Sparkles } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
 
 export const CostTimeRiskCards = () => {
-  const { stats, projects } = useDashboard();
+  const { stats, activeStateMetrics, filteredProjects, projects } = useDashboard();
 
   const { costBins, timeBins, costSevere, timeSevere, avgCostRisk, avgTimeRisk } = useMemo(() => {
-    const list = Array.isArray(projects) ? projects : [];
+    // If state metrics provide calibrated bins and severe counts, prioritize them
+    if (stats?.costBins && stats?.timeBins) {
+      return {
+        costBins: stats.costBins,
+        timeBins: stats.timeBins,
+        costSevere: stats.costSevere ?? 0,
+        timeSevere: stats.timeSevere ?? 0,
+        avgCostRisk: stats.averageCostRisk ?? 0,
+        avgTimeRisk: stats.averageTimeRisk ?? 0,
+      };
+    }
+
+    const list = Array.isArray(filteredProjects) && filteredProjects.length > 0
+      ? filteredProjects
+      : Array.isArray(projects) ? projects : [];
     const total = list.length;
 
     const cBins = [
@@ -64,12 +78,12 @@ export const CostTimeRiskCards = () => {
     return {
       costBins: cBins,
       timeBins: tBins,
-      costSevere: cSev,
-      timeSevere: tSev,
+      costSevere: stats?.costSevere ?? cSev,
+      timeSevere: stats?.timeSevere ?? tSev,
       avgCostRisk: cAvg,
       avgTimeRisk: tAvg,
     };
-  }, [projects, stats]);
+  }, [filteredProjects, projects, stats]);
 
   const CustomBarTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
