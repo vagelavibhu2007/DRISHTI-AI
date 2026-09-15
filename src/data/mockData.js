@@ -99,6 +99,7 @@ export const STATE_RISK_DATA = [
   { state: 'Karnataka', code: 'KA', projects: 168, critical: 15, high: 38, med: 66, low: 49, avgRisk: 46.8, lat: 15.31, lng: 75.71 },
   { state: 'Assam', code: 'AS', projects: 88, critical: 21, high: 34, med: 22, low: 11, avgRisk: 66.8, lat: 26.20, lng: 92.93 },
   { state: 'Kerala', code: 'KL', projects: 76, critical: 9, high: 18, med: 29, low: 20, avgRisk: 44.5, lat: 10.85, lng: 76.27 },
+  { state: 'Jammu & Kashmir', code: 'JK', projects: 64, critical: 18, high: 26, med: 14, low: 6, avgRisk: 68.2, lat: 33.77, lng: 76.57 },
 ];
 
 /**

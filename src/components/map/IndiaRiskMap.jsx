@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, WMSTileLayer, GeoJSON, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet';
 import indiaGeoData from '../../data/india_states_simplified.json';
 import { INDIA_STATE_PATHS } from '../../data/indiaMapPaths';
 import { STATE_RISK_DATA, MOCK_PROJECTS } from '../../data/mockData';
@@ -14,11 +14,26 @@ import {
   Layers,
   ExternalLink,
   ShieldAlert,
-  Navigation
+  Navigation,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
 import { useAuth } from '../../context/AuthContext';
 import { resolveProjectLocation } from '../../data/canonicalLocations';
+
+// Helper component to smoothly handle Leaflet map resizing on expand/collapse without re-mounting
+const MapResizeHandler = ({ isExpanded }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [isExpanded, map]);
+  return null;
+};
 
 // Helper component to smoothly animate map viewport on state selection
 const MapViewportController = ({ selectedState, stateStats }) => {
@@ -26,8 +41,10 @@ const MapViewportController = ({ selectedState, stateStats }) => {
 
   useEffect(() => {
     if (!map) return;
-    if (selectedState && selectedState !== 'ALL' && stateStats[selectedState]) {
-      const coords = stateStats[selectedState].lonLatCentroid;
+    const norm = normalizeStateName(selectedState);
+    const stat = stateStats[selectedState] || stateStats[norm];
+    if (selectedState && selectedState !== 'ALL' && stat) {
+      const coords = stat.lonLatCentroid;
       if (coords && coords.length === 2) {
         // [lon, lat] -> [lat, lon]
         map.flyTo([coords[1], coords[0]], 6.5, { duration: 1.2 });
@@ -58,7 +75,27 @@ export const IndiaRiskMap = () => {
   const [selectedSector, setSelectedSector] = useState('ALL');
   const [selectedRisk, setSelectedRisk] = useState('ALL');
   const [activeHoverState, setActiveHoverState] = useState(null);
-  const [tileStyle, setTileStyle] = useState('bhuvan'); // 'bhuvan', 'osm', or 'carto'
+  const [tileStyle, setTileStyle] = useState('bhuvan'); // 'bhuvan', 'osm', or 'esri'
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Handle ESC key to exit map-only expanded view and prevent body scrolling
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isExpanded) {
+        setIsExpanded(false);
+      }
+    };
+    if (isExpanded) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isExpanded]);
 
   // Sync state filter when user authority changes
   useEffect(() => {
@@ -233,41 +270,64 @@ export const IndiaRiskMap = () => {
     } else if (hoveredProject && hoveredProject.state) {
       const pStates = extractProjectStates(hoveredProject.state);
       const primaryState = pStates[0] || hoveredProject.state;
+      const normPrimary = normalizeStateName(primaryState);
       const matched = INDIA_STATE_PATHS.find(
         (s) =>
           s.name.toLowerCase() === primaryState.toLowerCase() ||
-          normalizeStateName(s.name).toLowerCase() === normalizeStateName(primaryState).toLowerCase()
+          s.name.toLowerCase() === normPrimary.toLowerCase() ||
+          normalizeStateName(s.name).toLowerCase() === normPrimary.toLowerCase()
       );
-      targetName = matched ? matched.name : primaryState;
+      targetName = matched ? matched.name : (normPrimary || primaryState);
     } else if (selectedProject && selectedProject.state) {
       const pStates = extractProjectStates(selectedProject.state);
       const primaryState = pStates[0] || selectedProject.state;
+      const normPrimary = normalizeStateName(primaryState);
       const matched = INDIA_STATE_PATHS.find(
         (s) =>
           s.name.toLowerCase() === primaryState.toLowerCase() ||
-          normalizeStateName(s.name).toLowerCase() === normalizeStateName(primaryState).toLowerCase()
+          s.name.toLowerCase() === normPrimary.toLowerCase() ||
+          normalizeStateName(s.name).toLowerCase() === normPrimary.toLowerCase()
       );
-      targetName = matched ? matched.name : primaryState;
+      targetName = matched ? matched.name : (normPrimary || primaryState);
     } else if (selectedState !== 'ALL') {
       targetName = selectedState;
     } else {
       targetName = defaultState;
     }
 
-    return stateStats[targetName] || stateStats[defaultState] || Object.values(stateStats)[0];
+    const normTarget = normalizeStateName(targetName);
+    return (
+      stateStats[targetName] ||
+      stateStats[normTarget] ||
+      stateStats[defaultState] ||
+      Object.values(stateStats)[0]
+    );
   }, [activeHoverState, hoveredProject, selectedProject, selectedState, stateStats, isStateAuthority, assignedState]);
+
+  // Helper to extract clean canonical state name from any GeoJSON feature
+  const getStateNameFromFeature = (feature) => {
+    const props = feature.properties || {};
+    const raw = props.name || props.ST_NM || props.NAME_1 || props.state || props.code || '';
+    const norm = normalizeStateName(raw);
+    const matchedPath = INDIA_STATE_PATHS.find(
+      (s) =>
+        s.name.toLowerCase() === raw.toLowerCase() ||
+        s.rawName.toLowerCase() === raw.toLowerCase() ||
+        s.name.toLowerCase() === norm.toLowerCase() ||
+        (s.code && s.code.toLowerCase() === raw.toLowerCase()) ||
+        normalizeStateName(s.name).toLowerCase() === norm.toLowerCase()
+    );
+    return matchedPath ? matchedPath.name : (norm || raw);
+  };
 
   // Choropleth style for state boundaries on light basemap
   const getStateStyle = (feature) => {
-    const rawName = feature.properties.NAME_1 || feature.properties.name;
-    const matchedPath = INDIA_STATE_PATHS.find(
-      (s) => s.rawName === rawName || s.name.toLowerCase() === rawName.toLowerCase()
-    );
-    const stateName = matchedPath ? matchedPath.name : rawName;
-    const data = stateStats[stateName];
+    const stateName = getStateNameFromFeature(feature);
+    const normStateName = normalizeStateName(stateName);
+    const data = stateStats[stateName] || stateStats[normStateName];
 
-    const isSelected = selectedState === stateName;
-    const isHovered = activeHoverState === stateName;
+    const isSelected = selectedState === stateName || normalizeStateName(selectedState) === normStateName;
+    const isHovered = activeHoverState === stateName || normalizeStateName(activeHoverState) === normStateName;
 
     let fillColor = '#10B981'; // Low: green
     let borderColor = '#059669';
@@ -302,16 +362,16 @@ export const IndiaRiskMap = () => {
   };
 
   return (
-    <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200/90 shadow-card space-y-6">
-      {/* Top Header & Filter Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+    <div className={isExpanded ? "fixed inset-0 z-[99999] w-screen h-screen bg-slate-950 overflow-hidden flex flex-col p-0 m-0" : "bg-white p-5 sm:p-6 rounded-xl border border-slate-200/90 shadow-card space-y-6"}>
+      {/* Top Header & Filter Controls (Floats on top of map when expanded) */}
+      <div className={isExpanded ? "absolute top-3 left-3 right-3 z-[1000] bg-slate-900/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-700 text-white shadow-2xl flex flex-wrap items-center justify-between gap-2.5" : "flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200"}>
         <div>
-          <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+          <h3 className={`text-base font-bold flex items-center gap-2 ${isExpanded ? 'text-white' : 'text-slate-900'}`}>
             <MapPin className="w-5 h-5 text-gov-700" />
             Geographic Risk Radar (India)
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Spatial distribution of infrastructure project risk across India on OpenStreetMap basemap.
+          <p className={`text-xs mt-0.5 ${isExpanded ? 'text-slate-300' : 'text-slate-500'}`}>
+            Spatial distribution of infrastructure project risk across India with official Survey of India / Bhuvan geometry.
           </p>
         </div>
 
@@ -382,7 +442,7 @@ export const IndiaRiskMap = () => {
                   ? 'bg-white text-gov-800 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
-              title="Official ISRO Bhuvan Satellite & Geographic Basemap"
+              title="Official ISRO Bhuvan / Survey of India Boundary Representation"
             >
               ISRO Bhuvan
             </button>
@@ -393,22 +453,45 @@ export const IndiaRiskMap = () => {
                   ? 'bg-white text-gov-800 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
-              title="OpenStreetMap Standard Light Basemap"
+              title="OpenStreetMap Standard Basemap"
             >
               OSM Light
             </button>
             <button
-              onClick={() => setTileStyle('carto')}
+              onClick={() => setTileStyle('esri')}
               className={`px-2.5 py-1 rounded-md font-semibold transition ${
-                tileStyle === 'carto'
+                tileStyle === 'esri'
                   ? 'bg-white text-gov-800 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
-              title="Carto Positron Clean Basemap"
+              title="Clean Neutral Canvas"
             >
-              Clean White
+              Clean Gray
             </button>
           </div>
+
+          {/* Map-Only Expand / Collapse Button */}
+          <button
+            onClick={() => setIsExpanded((prev) => !prev)}
+            title={isExpanded ? "Exit Expanded Map (Esc)" : "Expand Map"}
+            className={`px-3 py-1.5 rounded-lg border font-semibold transition flex items-center gap-1.5 text-xs shadow-sm ${
+              isExpanded
+                ? 'bg-gov-700 hover:bg-gov-600 text-white border-gov-800'
+                : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+            }`}
+          >
+            {isExpanded ? (
+              <>
+                <Minimize2 className="w-4 h-4" />
+                <span>Exit Expanded Map</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Expand Map</span>
+              </>
+            )}
+          </button>
 
           {/* Reset Map Button */}
           <button
@@ -421,11 +504,11 @@ export const IndiaRiskMap = () => {
         </div>
       </div>
 
-      {/* Main Grid: Real India Light Basemap + State Spatial Profile Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left: Light OpenStreetMap Leaflet Container */}
-        <div className="lg:col-span-7 bg-slate-50 rounded-2xl p-2 border border-slate-200 shadow-sm relative">
-          <div className="h-[580px] w-full rounded-xl overflow-hidden border border-slate-200 relative bg-white">
+      {/* Main Container: Map occupies 100% in expanded mode; 2-column grid in normal mode */}
+      <div className={isExpanded ? "w-full h-full relative flex-1 min-h-0" : "grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"}>
+        {/* Map Container */}
+        <div className={isExpanded ? "w-full h-full p-0 m-0 border-0 rounded-none bg-transparent relative" : "lg:col-span-7 bg-slate-50 rounded-2xl p-2 border border-slate-200 shadow-sm relative"}>
+          <div className={isExpanded ? "w-full h-full rounded-none border-0 relative bg-slate-100" : "h-[580px] w-full rounded-xl overflow-hidden border border-slate-200 relative bg-white"}>
             <MapContainer
               center={[22.5, 82.0]}
               zoom={4.8}
@@ -435,28 +518,14 @@ export const IndiaRiskMap = () => {
               className="w-full h-full"
               attributionControl={true}
             >
+              {/* Leaflet Resize Handler for Smooth Viewport Adaptation */}
+              <MapResizeHandler isExpanded={isExpanded} />
+
               {/* Dynamic Viewport Controller */}
               <MapViewportController selectedState={selectedState} stateStats={stateStats} />
 
-              {/* Basemap Tiles: Official ISRO Bhuvan / OSM / Carto */}
-              {tileStyle === 'bhuvan' ? (
-                <>
-                  <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
-                    attribution='&copy; <a href="https://bhuvan.nrsc.gov.in" target="_blank" rel="noreferrer">ISRO / NRSC Bhuvan</a>'
-                    maxZoom={19}
-                  />
-                  <WMSTileLayer
-                    url="https://bhuvan-vec1.nrsc.gov.in/bhuvan/wms"
-                    layers="basemap:INDIA_STATE_wolabel"
-                    format="image/png"
-                    transparent={true}
-                    version="1.1.1"
-                    attribution='&copy; <a href="https://bhuvan.nrsc.gov.in" target="_blank" rel="noreferrer">ISRO / NRSC Bhuvan</a>'
-                    maxZoom={19}
-                  />
-                </>
-              ) : tileStyle === 'osm' ? (
+              {/* Clean Basemap Tiles: Clear Borders, No Foreign Label Clutter, No Watermarks */}
+              {tileStyle === 'osm' ? (
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -464,9 +533,9 @@ export const IndiaRiskMap = () => {
                 />
               ) : (
                 <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-                  maxZoom={19}
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                  attribution='&copy; <a href="https://bhuvan.nrsc.gov.in" target="_blank" rel="noreferrer">ISRO Bhuvan</a> &amp; Survey of India | Esri'
+                  maxZoom={16}
                 />
               )}
 
@@ -476,12 +545,13 @@ export const IndiaRiskMap = () => {
                 data={indiaGeoData}
                 style={getStateStyle}
                 onEachFeature={(feature, layer) => {
-                  const rawName = feature.properties.NAME_1 || feature.properties.name;
-                  const matchedPath = INDIA_STATE_PATHS.find(
-                    (s) => s.rawName === rawName || s.name.toLowerCase() === rawName.toLowerCase()
-                  );
-                  const stateName = matchedPath ? matchedPath.name : rawName;
-                  const stat = stateStats[stateName];
+                  const stateName = getStateNameFromFeature(feature);
+                  const stat = stateStats[stateName] || {
+                    name: stateName,
+                    code: feature.properties?.code || '',
+                    avgRisk: 50.0,
+                    projects: 0
+                  };
 
                   layer.on({
                     mouseover: () => {
@@ -496,15 +566,13 @@ export const IndiaRiskMap = () => {
                     }
                   });
 
-                  if (stat) {
-                    layer.bindTooltip(
-                      `<div class="p-1 text-left">
-                        <div class="font-bold text-xs">${stateName} (${stat.code})</div>
-                        <div class="text-[10px] text-slate-300">Avg Risk: <strong>${stat.avgRisk}</strong> | Projects: <strong>${stat.projects}</strong></div>
-                      </div>`,
-                      { sticky: true, className: 'leaflet-tooltip' }
-                    );
-                  }
+                  layer.bindTooltip(
+                    `<div class="p-1 text-left font-sans">
+                      <div class="font-bold text-xs text-white">${stateName}${stat.code ? ` (${stat.code})` : ''}</div>
+                      <div class="text-[10px] text-slate-300">Avg Risk: <strong>${stat.avgRisk}</strong> | Projects: <strong>${stat.projects}</strong></div>
+                    </div>`,
+                    { sticky: true, className: 'leaflet-tooltip' }
+                  );
                 }}
               />
 
@@ -711,158 +779,160 @@ export const IndiaRiskMap = () => {
           </div>
         </div>
 
-        {/* Right: State Spatial Profile & Active Projects */}
-        <div className="lg:col-span-5 space-y-4">
-          {/* Active State Spatial Profile Card */}
-          <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                  State Spatial Profile
-                </span>
-                <h4 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                  {activeStateData.name}
-                  <span className="text-xs font-mono font-bold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
-                    {activeStateData.code}
+        {/* Right: State Spatial Profile & Active Projects (Hidden in Expanded Map Mode) */}
+        {!isExpanded && (
+          <div className="lg:col-span-5 space-y-4">
+            {/* Active State Spatial Profile Card */}
+            <div className="p-5 bg-slate-50 rounded-xl border border-slate-200 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    State Spatial Profile
                   </span>
-                </h4>
-              </div>
-              <RiskBadge
-                level={getRiskLevel(activeStateData.avgRisk)}
-                score={activeStateData.avgRisk}
-                size="sm"
-              />
-            </div>
-
-            {/* Metrics Breakdown */}
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                <span className="text-[10px] text-slate-500 block font-medium">Total</span>
-                <span className="font-mono font-extrabold text-slate-900 text-sm">
-                  {activeStateData.projects}
-                </span>
-              </div>
-              <div className="p-2.5 bg-red-50 rounded-lg border border-red-200">
-                <span className="text-[10px] text-red-700 block font-medium">Critical</span>
-                <span className="font-mono font-extrabold text-red-700 text-sm">
-                  {activeStateData.critical}
-                </span>
-              </div>
-              <div className="p-2.5 bg-orange-50 rounded-lg border border-orange-200">
-                <span className="text-[10px] text-orange-700 block font-medium">High</span>
-                <span className="font-mono font-extrabold text-orange-700 text-sm">
-                  {activeStateData.high}
-                </span>
-              </div>
-              <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200">
-                <span className="text-[10px] text-emerald-700 block font-medium">Low/Med</span>
-                <span className="font-mono font-extrabold text-emerald-700 text-sm">
-                  {(activeStateData.med || 0) + (activeStateData.low || 0)}
-                </span>
-              </div>
-            </div>
-
-            {/* Regional Overrun Risk Factors */}
-            <div className="space-y-2 pt-2 border-t border-slate-200 text-xs">
-              <div className="flex items-center justify-between text-slate-600">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <IndianRupee className="w-3.5 h-3.5 text-red-600" />
-                  Avg Cost Overrun Risk
-                </span>
-                <span className="font-mono font-bold text-slate-900">
-                  {activeStateData.avgCostRisk}%
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-red-500 h-full rounded-full transition-all"
-                  style={{ width: `${Math.min(activeStateData.avgCostRisk, 100)}%` }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-slate-600 pt-1">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <Clock className="w-3.5 h-3.5 text-amber-600" />
-                  Avg Time Overrun Risk
-                </span>
-                <span className="font-mono font-bold text-slate-900">
-                  {activeStateData.avgTimeRisk}%
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-amber-500 h-full rounded-full transition-all"
-                  style={{ width: `${Math.min(activeStateData.avgTimeRisk, 100)}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Filtered Projects in View */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5 text-gov-700" />
-                Active Projects in View ({filteredMapProjects.length})
-              </span>
-              {selectedState !== (isStateAuthority && assignedState ? assignedState : 'ALL') && (
-                <button
-                  onClick={() => {
-                    setSelectedState(isStateAuthority && assignedState ? assignedState : 'ALL');
-                    setSelectedProject(null);
-                  }}
-                  className="text-xs text-gov-700 hover:text-gov-900 font-bold hover:underline"
-                >
-                  Reset State Filter
-                </button>
-              )}
-            </div>
-
-            <div className="space-y-2 max-h-[290px] overflow-y-auto pr-1">
-              {filteredMapProjects.length === 0 ? (
-                <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                  No projects match the current state, sector, or risk filters.
+                  <h4 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                    {activeStateData.name}
+                    <span className="text-xs font-mono font-bold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      {activeStateData.code}
+                    </span>
+                  </h4>
                 </div>
-              ) : (
-                filteredMapProjects.slice(0, 8).map((project) => (
-                  <div
-                    key={project.projectId}
-                    onMouseEnter={() => setHoveredProject(project)}
-                    onMouseLeave={() => setHoveredProject(null)}
-                    onClick={() => {
-                      setSelectedProject(project);
-                      setHoveredProject(null);
-                      setDrawerProjectId(project.projectId);
-                    }}
-                    className="p-3 bg-white rounded-lg border border-slate-200 hover:border-gov-700 hover:shadow-sm transition cursor-pointer flex items-center justify-between gap-3 group"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-mono text-[10px] font-bold text-slate-500 group-hover:text-gov-700">
-                          #{project.projectId}
-                        </span>
-                        <RiskBadge level={project.riskLevel} size="xs" showDot={false} />
-                      </div>
-                      <h5 className="text-xs font-bold text-slate-900 truncate">
-                        {project.projectName}
-                      </h5>
-                      <span className="text-[10px] text-slate-400">
-                        {project.sector} • {project.state}
-                      </span>
-                    </div>
+                <RiskBadge
+                  level={getRiskLevel(activeStateData.avgRisk)}
+                  score={activeStateData.avgRisk}
+                  size="sm"
+                />
+              </div>
 
-                    <div className="text-right flex-shrink-0">
-                      <span className="font-mono text-xs font-extrabold text-slate-900 block">
-                        {Number(project.overallRisk).toFixed(1)}
-                      </span>
-                      <span className="text-[10px] text-slate-400">Risk Score</span>
-                    </div>
+              {/* Metrics Breakdown */}
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <span className="text-[10px] text-slate-500 block font-medium">Total</span>
+                  <span className="font-mono font-extrabold text-slate-900 text-sm">
+                    {activeStateData.projects}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-red-50 rounded-lg border border-red-200">
+                  <span className="text-[10px] text-red-700 block font-medium">Critical</span>
+                  <span className="font-mono font-extrabold text-red-700 text-sm">
+                    {activeStateData.critical}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-orange-50 rounded-lg border border-orange-200">
+                  <span className="text-[10px] text-orange-700 block font-medium">High</span>
+                  <span className="font-mono font-extrabold text-orange-700 text-sm">
+                    {activeStateData.high}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <span className="text-[10px] text-emerald-700 block font-medium">Low/Med</span>
+                  <span className="font-mono font-extrabold text-emerald-700 text-sm">
+                    {(activeStateData.med || 0) + (activeStateData.low || 0)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Regional Overrun Risk Factors */}
+              <div className="space-y-2 pt-2 border-t border-slate-200 text-xs">
+                <div className="flex items-center justify-between text-slate-600">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <IndianRupee className="w-3.5 h-3.5 text-red-600" />
+                    Avg Cost Overrun Risk
+                  </span>
+                  <span className="font-mono font-bold text-slate-900">
+                    {activeStateData.avgCostRisk}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-red-500 h-full rounded-full transition-all"
+                    style={{ width: `${Math.min(activeStateData.avgCostRisk, 100)}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-slate-600 pt-1">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    Avg Time Overrun Risk
+                  </span>
+                  <span className="font-mono font-bold text-slate-900">
+                    {activeStateData.avgTimeRisk}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-amber-500 h-full rounded-full transition-all"
+                    style={{ width: `${Math.min(activeStateData.avgTimeRisk, 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Filtered Projects in View */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-gov-700" />
+                  Active Projects in View ({filteredMapProjects.length})
+                </span>
+                {selectedState !== (isStateAuthority && assignedState ? assignedState : 'ALL') && (
+                  <button
+                    onClick={() => {
+                      setSelectedState(isStateAuthority && assignedState ? assignedState : 'ALL');
+                      setSelectedProject(null);
+                    }}
+                    className="text-xs text-gov-700 hover:text-gov-900 font-bold hover:underline"
+                  >
+                    Reset State Filter
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-2 max-h-[290px] overflow-y-auto pr-1">
+                {filteredMapProjects.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                    No projects match the current state, sector, or risk filters.
                   </div>
-                ))
-              )}
+                ) : (
+                  filteredMapProjects.slice(0, 8).map((project) => (
+                    <div
+                      key={project.projectId}
+                      onMouseEnter={() => setHoveredProject(project)}
+                      onMouseLeave={() => setHoveredProject(null)}
+                      onClick={() => {
+                        setSelectedProject(project);
+                        setHoveredProject(null);
+                        setDrawerProjectId(project.projectId);
+                      }}
+                      className="p-3 bg-white rounded-lg border border-slate-200 hover:border-gov-700 hover:shadow-sm transition cursor-pointer flex items-center justify-between gap-3 group"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-mono text-[10px] font-bold text-slate-500 group-hover:text-gov-700">
+                            #{project.projectId}
+                          </span>
+                          <RiskBadge level={project.riskLevel} size="xs" showDot={false} />
+                        </div>
+                        <h5 className="text-xs font-bold text-slate-900 truncate">
+                          {project.projectName}
+                        </h5>
+                        <span className="text-[10px] text-slate-400">
+                          {project.sector} • {project.state}
+                        </span>
+                      </div>
+
+                      <div className="text-right flex-shrink-0">
+                        <span className="font-mono text-xs font-extrabold text-slate-900 block">
+                          {Number(project.overallRisk).toFixed(1)}
+                        </span>
+                        <span className="text-[10px] text-slate-400">Risk Score</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
