@@ -202,6 +202,24 @@ export const DashboardProvider = ({ children }) => {
     return stats;
   }, [stats, projects, isStateAuthority, assignedState]);
 
+  // Civilian Feedback Stats (Chief Project Officer suite)
+  const [civilianPendingCount, setCivilianPendingCount] = useState(0);
+
+  const refreshCivilianStats = useCallback(async () => {
+    try {
+      const res = await api.civilianFeedback.getStats();
+      if (res.success && res.data) {
+        setCivilianPendingCount(res.data.waitingReviewCount || 0);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshCivilianStats();
+  }, [refreshCivilianStats]);
+
   return (
     <DashboardContext.Provider
       value={{
@@ -235,7 +253,9 @@ export const DashboardProvider = ({ children }) => {
         updateAlertStatus,
         sidebarCollapsed,
         setSidebarCollapsed,
-        toggleSidebar
+        toggleSidebar,
+        civilianPendingCount,
+        refreshCivilianStats
       }}
     >
       {children}
@@ -250,3 +270,4 @@ export const useDashboard = () => {
   }
   return context;
 };
+

@@ -25,6 +25,7 @@ import PredictionTrends from './pages/PredictionTrends';
 import GeographicRisk from './pages/GeographicRisk';
 import Alerts from './pages/Alerts';
 import Reports from './pages/Reports';
+import CivilianFeedbackAdmin from './pages/CivilianFeedbackAdmin';
 
 // Authenticated Layout Wrapper
 const AuthenticatedLayout = ({ children }) => {
@@ -148,6 +149,14 @@ export const App = () => {
           element={
             <AuthenticatedLayout>
               <Reports />
+            </AuthenticatedLayout>
+          }
+        />
+        <Route
+          path="/civilian-feedback"
+          element={
+            <AuthenticatedLayout>
+              <CivilianFeedbackAdmin />
             </AuthenticatedLayout>
           }
         />

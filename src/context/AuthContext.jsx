@@ -129,6 +129,25 @@ export const AuthProvider = ({ children }) => {
   const role = isStateAuthority ? 'STATE' : 'CENTRAL';
   const assignedState = isStateAuthority ? (user?.assignedState || user?.state || null) : null;
 
+  // Highest-rank Central Authority check (Chief Project Officer / Director General)
+  const posLower = String(user?.position || '').toLowerCase();
+  const unameLower = String(user?.username || '').toLowerCase();
+  const isHighestRankCentralAuthority = isCentralAuthority && (
+    user?.is_highest_rank === true ||
+    user?.isHighestRank === true ||
+    posLower.includes('chief project officer') ||
+    posLower.includes('chief project director') ||
+    posLower.includes('director general') ||
+    posLower.includes('chief executive officer') ||
+    posLower.includes('cpo') ||
+    posLower.includes('cpd') ||
+    posLower.includes('dg') ||
+    posLower.includes('ceo') ||
+    posLower.includes('chief') ||
+    unameLower === 'vibhu' ||
+    unameLower === 'aarav_sharma'
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -146,6 +165,7 @@ export const AuthProvider = ({ children }) => {
         changePassword,
         isCentralAuthority,
         isStateAuthority,
+        isHighestRankCentralAuthority,
         assignedState,
       }}
     >
@@ -166,6 +186,7 @@ export const useAuth = () => {
       authError: null,
       isCentralAuthority: true,
       isStateAuthority: false,
+      isHighestRankCentralAuthority: false,
       assignedState: null,
       login: async () => ({ success: false, error: 'Auth context not mounted' }),
       register: async () => ({ success: false, error: 'Auth context not mounted' }),
@@ -178,3 +199,4 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
+

@@ -93,22 +93,40 @@ class CivilianFeedback(Base):
     category = Column(String(100), nullable=False) # Progress Update, Quality, Public Impact, Accessibility, General Feedback
     rating = Column(Integer, nullable=True) # 1 to 5
     feedback_text = Column(Text, nullable=False)
+    status = Column(String(50), default="Submitted", nullable=True) # Submitted, Reviewed, In Progress, Resolved
+    state = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow, nullable=True)
 
     # Relationships
     user = relationship("CivilianUser", back_populates="feedbacks")
 
     def to_dict(self) -> dict:
+        civ_name = self.user.full_name if self.user else "Citizen Contributor"
+        state_val = self.state or (self.user.state if self.user else None)
+        district_val = self.user.district if self.user else None
+        
         return {
             "id": self.id,
+            "itemType": "FEEDBACK",
+            "typeLabel": "Civilian Feedback",
             "userId": self.civilian_user_id,
-            "userName": self.user.full_name if self.user else "Citizen Contributor",
-            "projectId": self.project_id,
-            "projectName": self.project_name,
+            "civilianName": civ_name,
+            "userName": civ_name,
+            "civilianMobile": self.user.mobile if self.user else None,
+            "civilianEmail": self.user.email if self.user else None,
+            "projectId": self.project_id or "N/A",
+            "projectName": self.project_name or "General Project Feedback",
             "category": self.category,
             "rating": self.rating,
             "feedbackText": self.feedback_text,
-            "createdAt": self.created_at.isoformat() if self.created_at else None
+            "message": self.feedback_text,
+            "description": self.feedback_text,
+            "state": state_val or "National / General",
+            "district": district_val or "All Districts",
+            "status": self.status or "Submitted",
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
+            "updatedAt": self.updated_at.isoformat() if self.updated_at else None
         }
 
 
@@ -135,21 +153,31 @@ class CivilianIssue(Base):
     user = relationship("CivilianUser", back_populates="issues")
 
     def to_dict(self) -> dict:
+        civ_name = self.user.full_name if self.user else "Citizen Reporter"
+        state_val = self.user.state if self.user else None
+        district_val = self.user.district if self.user else None
+        
         return {
             "id": self.id,
+            "itemType": "ISSUE",
+            "typeLabel": "Ground Issue / Complaint",
             "userId": self.civilian_user_id,
-            "userName": self.user.full_name if self.user else "Citizen Reporter",
-            "projectId": self.project_id,
-            "projectName": self.project_name,
+            "civilianName": civ_name,
+            "userName": civ_name,
+            "civilianMobile": self.contact_mobile or (self.user.mobile if self.user else None),
+            "civilianEmail": self.contact_email or (self.user.email if self.user else None),
+            "projectId": self.project_id or "N/A",
+            "projectName": self.project_name or "Ground Level Issue",
             "category": self.category,
             "description": self.description,
+            "message": self.description,
             "locationName": self.location_name,
             "latitude": self.latitude,
             "longitude": self.longitude,
             "photoPath": self.photo_path,
-            "status": self.status,
-            "contactMobile": self.contact_mobile,
-            "contactEmail": self.contact_email,
+            "state": state_val or "National / General",
+            "district": district_val or "All Districts",
+            "status": self.status or "Submitted",
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None
         }

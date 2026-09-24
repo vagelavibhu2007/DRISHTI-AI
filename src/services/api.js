@@ -425,9 +425,46 @@ export const api = {
         // ignore
       }
     }
+  },
+
+  // 10. Civilian Feedback & Ground Issues (JanNirikshan Admin Suite)
+  civilianFeedback: {
+    getAll: async (params = {}) => {
+      try {
+        const response = await apiClient.get('/admin/civilian-feedback', { params });
+        return { success: true, data: response.data };
+      } catch (error) {
+        const msg = error.response?.data?.detail || error.message || 'Failed to fetch civilian feedback.';
+        return { success: false, error: msg, status: error.response?.status };
+      }
+    },
+
+    getStats: async () => {
+      try {
+        const response = await apiClient.get('/admin/civilian-feedback/stats');
+        return { success: true, data: response.data };
+      } catch (error) {
+        const msg = error.response?.data?.detail || error.message || 'Failed to fetch civilian stats.';
+        return { success: false, error: msg, status: error.response?.status };
+      }
+    },
+
+    updateStatus: async (itemType, itemId, statusValue, notes = '') => {
+      try {
+        const response = await apiClient.patch(`/admin/civilian-feedback/${itemType}/${itemId}/status`, {
+          status: statusValue,
+          notes: notes
+        });
+        return { success: true, data: response.data };
+      } catch (error) {
+        const msg = error.response?.data?.detail || error.message || 'Failed to update status.';
+        return { success: false, error: msg, status: error.response?.status };
+      }
+    }
   }
 };
 
 export default api;
+
 
 
