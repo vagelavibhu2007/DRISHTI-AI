@@ -140,6 +140,33 @@ def init_db():
             db.add(new_state_officer)
             logger.info("Initial State Authority officer provisioned.")
 
+        # Check Demo Civilian User (Ahmedabad, Gujarat)
+        from backend.models.civilian_model import CivilianUser
+        from backend.utils.aadhaar_security import encrypt_aadhaar
+        existing_civilian = db.query(CivilianUser).filter(CivilianUser.username == 'civilian_demo').first()
+        if not existing_civilian:
+            demo_civilian = CivilianUser(
+                first_name='Ramesh',
+                last_name='Sharma',
+                mobile='9825012345',
+                email='ramesh.sharma@example.com',
+                username='civilian_demo',
+                password_hash=hash_password('Civilian@123'),
+                aadhaar_encrypted=encrypt_aadhaar('987654321234'),
+                aadhaar_last4='1234',
+                address='104, Shanti Nagar, SG Highway',
+                pincode='380015',
+                state='Gujarat',
+                district='Ahmedabad',
+                sub_district='Daskroi',
+                latitude=23.0225,
+                longitude=72.5714,
+                role='CIVILIAN',
+                is_active=True
+            )
+            db.add(demo_civilian)
+            logger.info("Demo Civilian User provisioned (civilian_demo / Ahmedabad).")
+
         db.commit()
     except Exception as e:
         db.rollback()
