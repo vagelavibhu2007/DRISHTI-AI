@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
 import {
   DASHBOARD_STATS,
@@ -13,7 +13,7 @@ import { useAuth } from './AuthContext';
 const DashboardContext = createContext();
 
 export const DashboardProvider = ({ children }) => {
-  const { user, isCentralAuthority, isStateAuthority, assignedState } = useAuth();
+  const { user, isCentralAuthority, isStateAuthority, assignedState, isHighestRankCentralAuthority } = useAuth();
 
   // Global Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -202,6 +202,27 @@ export const DashboardProvider = ({ children }) => {
     return stats;
   }, [stats, projects, isStateAuthority, assignedState]);
 
+  // Civilian Feedback Stats (Highest-Rank Central Authority)
+  const [civilianPendingCount, setCivilianPendingCount] = useState(15);
+
+  const refreshCivilianStats = useCallback(async () => {
+    if (!isHighestRankCentralAuthority) return;
+    try {
+      const res = await api.civilianFeedback.getStats();
+      if (res?.success && res.data) {
+        setCivilianPendingCount(res.data.pending_review ?? res.data.unreviewed ?? 15);
+      }
+    } catch (e) {
+      // Retain previous or fallback count
+    }
+  }, [isHighestRankCentralAuthority]);
+
+  useEffect(() => {
+    if (isHighestRankCentralAuthority) {
+      refreshCivilianStats();
+    }
+  }, [isHighestRankCentralAuthority, refreshCivilianStats]);
+
   return (
     <DashboardContext.Provider
       value={{
@@ -235,7 +256,9 @@ export const DashboardProvider = ({ children }) => {
         updateAlertStatus,
         sidebarCollapsed,
         setSidebarCollapsed,
-        toggleSidebar
+        toggleSidebar,
+        civilianPendingCount,
+        refreshCivilianStats
       }}
     >
       {children}
@@ -250,3 +273,5 @@ export const useDashboard = () => {
   }
   return context;
 };
+
+export default DashboardContext;

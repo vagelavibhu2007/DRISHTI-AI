@@ -51,8 +51,8 @@ export const CivilianFeedbackAdmin = () => {
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('ALL'); // ALL, FEEDBACK, ISSUE
-  const [selectedStatus, setSelectedStatus] = useState('ALL'); // ALL, PENDING, REVIEWED, IN_PROGRESS, RESOLVED
+  const [selectedType, setSelectedType] = useState('ALL');
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedState, setSelectedState] = useState('ALL');
   const [selectedDistrict, setSelectedDistrict] = useState('ALL');
   const [selectedProject, setSelectedProject] = useState('ALL');
@@ -108,29 +108,21 @@ export const CivilianFeedbackAdmin = () => {
   // Filtered Items
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      // Type Filter
       if (selectedType !== 'ALL') {
         const itemType = (item.item_type || item.type || '').toUpperCase();
         if (selectedType === 'FEEDBACK' && itemType !== 'FEEDBACK') return false;
         if (selectedType === 'ISSUE' && itemType !== 'ISSUE') return false;
       }
 
-      // Status Filter
       if (selectedStatus !== 'ALL') {
         const itemStatus = (item.status || 'PENDING').toUpperCase();
         if (itemStatus !== selectedStatus) return false;
       }
 
-      // State Filter
       if (selectedState !== 'ALL' && item.state !== selectedState) return false;
-
-      // District Filter
       if (selectedDistrict !== 'ALL' && item.district !== selectedDistrict) return false;
-
-      // Project Filter
       if (selectedProject !== 'ALL' && item.project_name !== selectedProject) return false;
 
-      // Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const civilian = (item.civilian_name || item.name || '').toLowerCase();
@@ -154,7 +146,6 @@ export const CivilianFeedbackAdmin = () => {
     });
   }, [items, selectedType, selectedStatus, selectedState, selectedDistrict, selectedProject, searchQuery]);
 
-  // Status Action Handler
   const handleUpdateStatus = async (newStatus) => {
     if (!selectedItem) return;
     setIsUpdating(true);
@@ -166,7 +157,6 @@ export const CivilianFeedbackAdmin = () => {
 
       if (res?.success) {
         setActionSuccess(`Status successfully updated to ${newStatus.replace('_', ' ')}!`);
-        // Update local state
         setItems(prev =>
           prev.map(it =>
             it.id === itemId && (it.item_type || 'feedback') === itemType
@@ -177,7 +167,6 @@ export const CivilianFeedbackAdmin = () => {
         setSelectedItem(prev => (prev ? { ...prev, status: newStatus, admin_notes: adminNotes || prev.admin_notes } : null));
         setAdminNotes('');
         
-        // Refresh stats
         const statsRes = await civilianFeedback.getStats();
         if (statsRes?.success) setStats(statsRes.data);
         if (refreshCivilianStats) refreshCivilianStats();
@@ -190,7 +179,6 @@ export const CivilianFeedbackAdmin = () => {
     }
   };
 
-  // If not highest-rank central authority, render restricted view
   if (!isHighestRankCentralAuthority) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -243,7 +231,6 @@ export const CivilianFeedbackAdmin = () => {
 
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Total Intelligence */}
         <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Submissions</span>
@@ -259,7 +246,6 @@ export const CivilianFeedbackAdmin = () => {
           </div>
         </div>
 
-        {/* Pending / Unreviewed */}
         <div className="bg-white p-5 rounded-xl border border-amber-200/80 bg-amber-50/20 shadow-xs hover:border-amber-300 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Awaiting Review</span>
@@ -273,7 +259,6 @@ export const CivilianFeedbackAdmin = () => {
           </div>
         </div>
 
-        {/* In Progress */}
         <div className="bg-white p-5 rounded-xl border border-blue-200/80 bg-blue-50/20 shadow-xs hover:border-blue-300 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Under Action</span>
@@ -287,7 +272,6 @@ export const CivilianFeedbackAdmin = () => {
           </div>
         </div>
 
-        {/* Resolved */}
         <div className="bg-white p-5 rounded-xl border border-emerald-200/80 bg-emerald-50/20 shadow-xs hover:border-emerald-300 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">Resolved / Closed</span>
@@ -305,7 +289,6 @@ export const CivilianFeedbackAdmin = () => {
       {/* Filter & Search Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row gap-3">
-          {/* Search */}
           <div className="flex-1 relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -317,7 +300,6 @@ export const CivilianFeedbackAdmin = () => {
             />
           </div>
 
-          {/* Type Filter */}
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
             {['ALL', 'FEEDBACK', 'ISSUE'].map(type => (
               <button
@@ -337,7 +319,6 @@ export const CivilianFeedbackAdmin = () => {
 
         {/* Dropdown Filters */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
-          {/* Status */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Status</label>
             <select
@@ -353,7 +334,6 @@ export const CivilianFeedbackAdmin = () => {
             </select>
           </div>
 
-          {/* State */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">State</label>
             <select
@@ -371,7 +351,6 @@ export const CivilianFeedbackAdmin = () => {
             </select>
           </div>
 
-          {/* District */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">District</label>
             <select
@@ -386,7 +365,6 @@ export const CivilianFeedbackAdmin = () => {
             </select>
           </div>
 
-          {/* Project */}
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Project</label>
             <select
@@ -458,7 +436,6 @@ export const CivilianFeedbackAdmin = () => {
                         setActionSuccess('');
                       }}
                     >
-                      {/* Type Badge */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         {isIssue ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
@@ -473,7 +450,6 @@ export const CivilianFeedbackAdmin = () => {
                         )}
                       </td>
 
-                      {/* Citizen & Location */}
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-slate-900 flex items-center gap-1.5">
                           <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
@@ -485,7 +461,6 @@ export const CivilianFeedbackAdmin = () => {
                         </div>
                       </td>
 
-                      {/* Project */}
                       <td className="py-3.5 px-4 max-w-[200px]">
                         <div className="font-semibold text-slate-800 truncate" title={item.project_name}>
                           {item.project_name || 'General Public Infrastructure'}
@@ -495,7 +470,6 @@ export const CivilianFeedbackAdmin = () => {
                         </div>
                       </td>
 
-                      {/* Description Preview */}
                       <td className="py-3.5 px-4 max-w-[320px]">
                         <div className="font-medium text-slate-900 truncate">
                           {item.category || item.issue_type || 'Civic Observation'}
@@ -505,7 +479,6 @@ export const CivilianFeedbackAdmin = () => {
                         </p>
                       </td>
 
-                      {/* Date */}
                       <td className="py-3.5 px-4 whitespace-nowrap text-[11px] text-slate-500 font-mono">
                         {item.created_at ? new Date(item.created_at).toLocaleDateString('en-IN', {
                           day: '2-digit',
@@ -514,7 +487,6 @@ export const CivilianFeedbackAdmin = () => {
                         }) : 'Recent'}
                       </td>
 
-                      {/* Status */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         {status === 'RESOLVED' ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -539,7 +511,6 @@ export const CivilianFeedbackAdmin = () => {
                         )}
                       </td>
 
-                      {/* Action */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <button
                           onClick={(e) => {
@@ -562,11 +533,10 @@ export const CivilianFeedbackAdmin = () => {
         )}
       </div>
 
-      {/* Detail & Action Modal Drawer */}
+      {/* Detail & Action Modal */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-2.5">
                 {(selectedItem.item_type || selectedItem.type || '').toUpperCase() === 'ISSUE' ? (
@@ -596,7 +566,6 @@ export const CivilianFeedbackAdmin = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-5 flex-1 text-xs">
               {actionSuccess && (
                 <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg flex items-center gap-2 font-medium">
@@ -605,7 +574,6 @@ export const CivilianFeedbackAdmin = () => {
                 </div>
               )}
 
-              {/* Metadata Grid */}
               <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200/80">
                 <div>
                   <span className="text-[10px] font-bold uppercase text-slate-400">Citizen Name</span>
@@ -645,7 +613,6 @@ export const CivilianFeedbackAdmin = () => {
                 </div>
               </div>
 
-              {/* Full Description / Content */}
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
                   Citizen Statement / Issue Report
@@ -655,7 +622,6 @@ export const CivilianFeedbackAdmin = () => {
                 </div>
               </div>
 
-              {/* Rating / Category if exists */}
               {selectedItem.rating && (
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-slate-600">Citizen Satisfaction:</span>
@@ -666,7 +632,6 @@ export const CivilianFeedbackAdmin = () => {
                 </div>
               )}
 
-              {/* Authority Remediation & Notes */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
                   Apex Authority Remediation Notes / Directives
@@ -681,7 +646,6 @@ export const CivilianFeedbackAdmin = () => {
               </div>
             </div>
 
-            {/* Modal Actions Footer */}
             <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-500">Current Status:</span>

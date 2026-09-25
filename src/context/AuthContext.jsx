@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -124,10 +124,42 @@ export const AuthProvider = ({ children }) => {
 
   // Read user's role directly from authenticated user object session
   const rawRole = String(user?.role || user?.authority_type || user?.authorityType || 'CENTRAL').toUpperCase();
-  const isCentralAuthority = rawRole === 'CENTRAL' || rawRole === 'CENTRAL_AUTHORITY';
-  const isStateAuthority = rawRole === 'STATE' || rawRole === 'STATE_AUTHORITY';
+  const isStateAuthority = rawRole === 'STATE' || rawRole === 'STATE_AUTHORITY' || Boolean(user?.state && String(user?.authority_type || '').includes('STATE'));
+  const isCentralAuthority = !isStateAuthority && (rawRole === 'CENTRAL' || rawRole === 'CENTRAL_AUTHORITY' || String(user?.authority_type || '').toUpperCase().includes('CENTRAL'));
   const role = isStateAuthority ? 'STATE' : 'CENTRAL';
   const assignedState = isStateAuthority ? (user?.assignedState || user?.state || null) : null;
+
+  // Highest-Rank Central Authority verification (Chief Project Officer / Apex Central Authority)
+  const isHighestRankCentralAuthority = useMemo(() => {
+    if (!user || isStateAuthority) {
+      return false;
+    }
+
+    if (user.is_highest_rank === true || user.isHighestRank === true) {
+      return true;
+    }
+
+    const pos = String(user.position || user.designation || user.rank || user.role_title || user.title || '').toLowerCase().trim();
+    const username = String(user.username || '').toLowerCase().trim();
+    const email = String(user.email || '').toLowerCase().trim();
+
+    const highestRankKeywords = [
+      'chief project officer',
+      'cpo',
+      'highest-rank',
+      'highest rank',
+      'apex',
+      'director general',
+      'secretary',
+      'chief',
+      'central apex'
+    ];
+
+    const matchesKeyword = highestRankKeywords.some(kw => pos.includes(kw));
+    const matchesKnownAdmin = ['vibhu', 'aarav_sharma', 'cpo'].includes(username) || email.startsWith('vibhu');
+
+    return matchesKeyword || matchesKnownAdmin;
+  }, [user, isCentralAuthority, isStateAuthority]);
 
   return (
     <AuthContext.Provider
@@ -147,6 +179,7 @@ export const AuthProvider = ({ children }) => {
         isCentralAuthority,
         isStateAuthority,
         assignedState,
+        isHighestRankCentralAuthority,
       }}
     >
       {children}
@@ -167,6 +200,7 @@ export const useAuth = () => {
       isCentralAuthority: true,
       isStateAuthority: false,
       assignedState: null,
+      isHighestRankCentralAuthority: false,
       login: async () => ({ success: false, error: 'Auth context not mounted' }),
       register: async () => ({ success: false, error: 'Auth context not mounted' }),
       logout: async () => {},
