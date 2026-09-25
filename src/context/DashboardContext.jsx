@@ -13,7 +13,7 @@ import { useAuth } from './AuthContext';
 const DashboardContext = createContext();
 
 export const DashboardProvider = ({ children }) => {
-  const { user, isCentralAuthority, isStateAuthority, assignedState } = useAuth();
+  const { user, isCentralAuthority, isStateAuthority, isHighestRankCentralAuthority, assignedState } = useAuth();
 
   // Global Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -206,6 +206,7 @@ export const DashboardProvider = ({ children }) => {
   const [civilianPendingCount, setCivilianPendingCount] = useState(0);
 
   const refreshCivilianStats = useCallback(async () => {
+    if (!user || !isHighestRankCentralAuthority) return;
     try {
       const res = await api.civilianFeedback.getStats();
       if (res.success && res.data) {
@@ -214,11 +215,13 @@ export const DashboardProvider = ({ children }) => {
     } catch (e) {
       // ignore
     }
-  }, []);
+  }, [user, isHighestRankCentralAuthority]);
 
   useEffect(() => {
-    refreshCivilianStats();
-  }, [refreshCivilianStats]);
+    if (user && isHighestRankCentralAuthority) {
+      refreshCivilianStats();
+    }
+  }, [user, isHighestRankCentralAuthority, refreshCivilianStats]);
 
   return (
     <DashboardContext.Provider
