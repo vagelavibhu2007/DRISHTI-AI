@@ -127,7 +127,6 @@ export const CivilianFeedbackAdmin = () => {
 
       if (res.success) {
         setActionSuccessMsg(`Item successfully marked as "${newStatus}"!`);
-        // Update item in local list
         setItems((prev) =>
           prev.map((item) =>
             item.id === selectedItem.id && item.itemType === selectedItem.itemType
@@ -136,7 +135,6 @@ export const CivilianFeedbackAdmin = () => {
           )
         );
         setSelectedItem((prev) => ({ ...prev, status: newStatus }));
-        // Refresh global count badge
         refreshCivilianStats();
       } else {
         alert(res.error || 'Failed to update status.');
@@ -182,7 +180,6 @@ export const CivilianFeedbackAdmin = () => {
     );
   };
 
-  // If user is not highest rank central authority, show access restricted state
   if (!isHighestRankCentralAuthority) {
     return (
       <div className="p-8 max-w-4xl mx-auto my-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl">
@@ -308,7 +305,6 @@ export const CivilianFeedbackAdmin = () => {
       {/* Filter Controls Bar */}
       <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
         <div className="flex flex-col md:flex-row md:items-center gap-3">
-          {/* Search Box */}
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -332,7 +328,6 @@ export const CivilianFeedbackAdmin = () => {
 
         {/* Dropdown Filters */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-          {/* Item Type */}
           <div>
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
               Submission Type
@@ -348,7 +343,6 @@ export const CivilianFeedbackAdmin = () => {
             </select>
           </div>
 
-          {/* Status Filter */}
           <div>
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
               Status
@@ -366,7 +360,6 @@ export const CivilianFeedbackAdmin = () => {
             </select>
           </div>
 
-          {/* State Filter */}
           <div>
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
               State
@@ -385,7 +378,6 @@ export const CivilianFeedbackAdmin = () => {
             </select>
           </div>
 
-          {/* District Filter */}
           <div>
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
               District
@@ -404,7 +396,6 @@ export const CivilianFeedbackAdmin = () => {
             </select>
           </div>
 
-          {/* Project Filter */}
           <div>
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
               Project
@@ -423,7 +414,6 @@ export const CivilianFeedbackAdmin = () => {
             </select>
           </div>
 
-          {/* Sort Order */}
           <div>
             <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
               Sort Order

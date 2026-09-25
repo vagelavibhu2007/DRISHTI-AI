@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
 import {
   DASHBOARD_STATS,
@@ -270,4 +270,3 @@ export const useDashboard = () => {
   }
   return context;
 };
-

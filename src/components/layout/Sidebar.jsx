@@ -14,11 +14,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
-  Building2,
-  MessageSquare
+  Building2
 } from 'lucide-react';
 import { useDashboard } from '../../context/DashboardContext';
-import { useAuth } from '../../context/AuthContext';
 
 export const Sidebar = () => {
   const {
@@ -26,11 +24,9 @@ export const Sidebar = () => {
     toggleSidebar,
     stats,
     alerts,
-    civilianPendingCount,
     setIsSettingsOpen,
     setIsHelpOpen
   } = useDashboard();
-  const { isHighestRankCentralAuthority } = useAuth();
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -41,13 +37,6 @@ export const Sidebar = () => {
     { to: '/map', label: 'Geographic Risk', icon: Map },
     { to: '/alerts', label: 'Early Warnings', icon: BellRing, badge: stats.totalActiveAlerts, badgeColor: 'bg-orange-500 text-white' },
     { to: '/reports', label: 'Reports', icon: FileText },
-    ...(isHighestRankCentralAuthority ? [{
-      to: '/civilian-feedback',
-      label: 'Civilian Feedback',
-      icon: MessageSquare,
-      badge: civilianPendingCount > 0 ? civilianPendingCount : null,
-      badgeColor: 'bg-emerald-500 text-white'
-    }] : [])
   ];
 
   return (

@@ -54,27 +54,6 @@ class User(Base):
             return f'XXXXXX{last4}'
         return ('X' * prefix_len) + last4
 
-    @property
-    def is_highest_rank(self) -> bool:
-        """Determines if the user is the highest-rank Central Authority (e.g. Chief Project Officer / Director)."""
-        if self.authority_type != 'CENTRAL_AUTHORITY':
-            return False
-        pos = (self.position or '').strip().lower()
-        uname = (self.username or '').strip().lower()
-        highest_rank_keywords = [
-            'chief project officer',
-            'chief project director',
-            'director general',
-            'chief executive officer',
-            'cpo',
-            'cpd',
-            'dg',
-            'ceo',
-            'chief',
-            'head'
-        ]
-        return any(k in pos for k in highest_rank_keywords) or uname in ('vibhu', 'aarav_sharma')
-
     def to_dict(self) -> dict:
         return {
             'id': self.id,
@@ -87,8 +66,6 @@ class User(Base):
             'authority_type': self.authority_type,
             'state': self.state,
             'position': self.position,
-            'is_highest_rank': self.is_highest_rank,
-            'isHighestRank': self.is_highest_rank,
             'id_proof_type': self.id_proof_type,
             'masked_id_proof_number': self.masked_id_number,
             'has_profile_photo': bool(self.profile_photo_path),
