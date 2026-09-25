@@ -427,7 +427,7 @@ export const api = {
     }
   },
 
-  // 10. Civilian Feedback & Ground Issues (JanNirikshan Admin Suite)
+  // 12. Civilian Feedback & Ground Issues Administration (Highest-Rank Central Authority)
   civilianFeedback: {
     getAll: async (params = {}) => {
       try {
@@ -438,7 +438,6 @@ export const api = {
         return { success: false, error: msg, status: error.response?.status };
       }
     },
-
     getStats: async () => {
       try {
         const response = await apiClient.get('/admin/civilian-feedback/stats');
@@ -448,12 +447,13 @@ export const api = {
         return { success: false, error: msg, status: error.response?.status };
       }
     },
-
     updateStatus: async (itemType, itemId, statusValue, notes = '') => {
       try {
-        const response = await apiClient.patch(`/admin/civilian-feedback/${itemType}/${itemId}/status`, {
+        const cleanType = String(itemType).toLowerCase().startsWith('iss') ? 'issue' : 'feedback';
+        const cleanId = String(itemId).replace(/^(fb_|iss_)/, '');
+        const response = await apiClient.patch(`/admin/civilian-feedback/${cleanType}/${cleanId}/status`, {
           status: statusValue,
-          notes: notes
+          admin_notes: notes
         });
         return { success: true, data: response.data };
       } catch (error) {
@@ -463,6 +463,8 @@ export const api = {
     }
   }
 };
+
+export const civilianFeedback = api.civilianFeedback;
 
 export default api;
 
