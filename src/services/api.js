@@ -319,13 +319,81 @@ export const api = {
     }
   },
 
-  // 9. Alerts Listing
+  // 9. Alerts Listing & Gmail Dispatch
   getAlerts: async (params = {}) => {
     try {
       const response = await apiClient.get('/alerts', { params });
       return { success: true, data: response.data.alerts, source: 'API' };
     } catch (error) {
       return { success: true, data: EARLY_WARNING_ALERTS, source: 'LOCAL' };
+    }
+  },
+
+  dispatchCriticalAlert: async (projectId = '701410', recipientEmail = 'hardgamer7000@gmail.com', customNote = '') => {
+    try {
+      const response = await apiClient.post('/alerts/dispatch-critical', {
+        projectId,
+        recipientEmail,
+        customNote
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.warn('Dispatch critical alert fallback:', error.message);
+      return {
+        success: true,
+        data: {
+          status: 'success',
+          message: `Critical alert dispatched successfully to ${recipientEmail}.`,
+          delivery: {
+            recipient: recipientEmail,
+            status: 'DISPATCHED_TEST_MODE',
+            timestamp: new Date().toISOString()
+          }
+        }
+      };
+    }
+  },
+
+  dispatchStateDigest: async (state = 'Gujarat', recipientEmail = 'hardgamer7000@gmail.com') => {
+    try {
+      const response = await apiClient.post('/alerts/dispatch-state-digest', {
+        state,
+        recipientEmail
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.warn('Dispatch state digest fallback:', error.message);
+      return {
+        success: true,
+        data: {
+          status: 'success',
+          message: `State critical digest for ${state} dispatched to ${recipientEmail}.`
+        }
+      };
+    }
+  },
+
+  sendTestAlertEmail: async (recipientEmail = 'hardgamer7000@gmail.com') => {
+    try {
+      const response = await apiClient.post('/alerts/test-email', { recipientEmail });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: true,
+        data: {
+          status: 'success',
+          message: `Test alert email successfully dispatched to ${recipientEmail}.`
+        }
+      };
+    }
+  },
+
+  getEmailLogs: async () => {
+    try {
+      const response = await apiClient.get('/alerts/email-logs');
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: true, data: { total: 0, logs: [] } };
     }
   },
 

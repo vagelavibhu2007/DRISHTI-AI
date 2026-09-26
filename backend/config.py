@@ -98,6 +98,16 @@ class Settings(BaseSettings):
     MAX_ID_PROOF_SIZE: int = 5 * 1024 * 1024  # 5 MB
     MAX_PROFILE_PHOTO_SIZE: int = 2 * 1024 * 1024  # 2 MB
 
+    # Email & Alert Notification Configuration
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "drishti.ai.alerts@gmail.com")
+    SMTP_FROM_NAME: str = os.getenv("SMTP_FROM_NAME", "DRISHTI AI Early Warning Radar")
+    SMTP_TLS: bool = True
+    ALERT_RECIPIENT_EMAIL: str = os.getenv("ALERT_RECIPIENT_EMAIL", "hardgamer7000@gmail.com")
+
     class Config:
         env_file = ".env"
         extra = "ignore"

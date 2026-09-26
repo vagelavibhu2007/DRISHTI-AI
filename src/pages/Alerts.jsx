@@ -10,21 +10,39 @@ import {
   Filter,
   Eye,
   ExternalLink,
-  RotateCcw
+  RotateCcw,
+  Mail,
+  Send,
+  Check,
+  X,
+  Sparkles,
+  Building2,
+  MapPin,
+  Flame,
+  Loader2
 } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
 import { useDashboard } from '../context/DashboardContext';
 import { RiskBadge } from '../components/common/RiskBadge';
 import StatusBadge from '../components/common/StatusBadge';
 import { SearchBar } from '../components/common/SearchBar';
+import { api } from '../services/api';
 
 export const Alerts = () => {
   const navigate = useNavigate();
-  const { alerts, updateAlertStatus, stats } = useDashboard();
+  const { alerts, updateAlertStatus, stats, projects } = useDashboard();
 
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Email Dispatch Modal State
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [selectedProjectForEmail, setSelectedProjectForEmail] = useState(null);
+  const [recipientEmail, setRecipientEmail] = useState('hardgamer7000@gmail.com');
+  const [emailNote, setEmailNote] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailStatusMsg, setEmailStatusMsg] = useState(null);
 
   // Counts
   const criticalCount = alerts.filter((a) => a.severity === 'CRITICAL').length;
@@ -49,11 +67,84 @@ export const Alerts = () => {
     });
   }, [alerts, severityFilter, statusFilter, searchQuery]);
 
+  const handleOpenEmailModal = (alert) => {
+    const matchedProject = projects.find(p => p.projectId === alert.projectId) || {
+      projectId: alert.projectId,
+      projectName: alert.projectName,
+      ministry: alert.ministry,
+      state: alert.state,
+      overallRisk: alert.probability || 88.0,
+      costRisk: 90.0,
+      timeRisk: 85.0,
+      physicalProgress: 42.0,
+      cumulativeExpenditure: 1890,
+      originalCost: 1976
+    };
+    setSelectedProjectForEmail(matchedProject);
+    setEmailStatusMsg(null);
+    setIsEmailModalOpen(true);
+  };
+
+  const handleSendEmailDispatch = async () => {
+    setIsSendingEmail(true);
+    setEmailStatusMsg(null);
+    try {
+      const pid = selectedProjectForEmail?.projectId || '701410';
+      const res = await api.dispatchCriticalAlert(pid, recipientEmail, emailNote);
+      setEmailStatusMsg({
+        type: 'success',
+        text: `Critical alert successfully dispatched to ${recipientEmail} with PM & Central/State CC.`
+      });
+      setTimeout(() => {
+        setIsEmailModalOpen(false);
+        setEmailStatusMsg(null);
+      }, 2500);
+    } catch (err) {
+      setEmailStatusMsg({
+        type: 'error',
+        text: err.message || 'Failed to dispatch alert email.'
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleSendStateDigest = async () => {
+    setIsSendingEmail(true);
+    try {
+      await api.dispatchStateDigest('Gujarat', recipientEmail);
+      alert(`🏛️ State Authority Critical Digest for Gujarat dispatched directly to ${recipientEmail}!`);
+    } catch (err) {
+      alert(`Error sending digest: ${err.message}`);
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   return (
     <PageContainer
       breadcrumbs={[{ label: 'Early Warnings' }]}
       title="Early Warning & Anomaly Detection Radar"
-      subtitle="Automated predictive incident detection and inter-ministerial resolution dispatch."
+      subtitle="Automated predictive incident detection and direct Gmail escalation dispatch."
+      action={
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => handleOpenEmailModal(alerts[0] || { projectId: '701410', projectName: 'Rajasthan Feeder Project' })}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>Dispatch Alert to {recipientEmail}</span>
+          </button>
+
+          <button
+            onClick={handleSendStateDigest}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-sm transition"
+          >
+            <Building2 className="w-3.5 h-3.5 text-gov-700" />
+            <span>Send State Critical Digest</span>
+          </button>
+        </div>
+      }
     >
       {/* Top 5 Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -168,10 +259,10 @@ export const Alerts = () => {
                 <th className="py-3 px-3">Risk Type</th>
                 <th className="py-3 px-3 text-right">Probability</th>
                 <th className="py-3 px-3 text-center">Severity</th>
-                <th className="py-3 px-3 min-w-[240px]">Reason & AI Recommendation</th>
+                <th className="py-3 px-3 min-w-[220px]">Reason & AI Recommendation</th>
                 <th className="py-3 px-3 hidden lg:table-cell">Created</th>
                 <th className="py-3 px-3 text-center">Status</th>
-                <th className="py-3 px-3.5 text-center">Action</th>
+                <th className="py-3 px-3.5 text-center min-w-[160px]">Direct Action</th>
               </tr>
             </thead>
 
@@ -225,6 +316,16 @@ export const Alerts = () => {
 
                   <td className="py-3 px-3.5 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-1.5">
+                      {/* Direct Gmail Dispatch Trigger */}
+                      <button
+                        onClick={() => handleOpenEmailModal(alert)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition"
+                        title="Send Critical Email Alert"
+                      >
+                        <Mail className="w-3 h-3 text-red-600" />
+                        <span>Email PM</span>
+                      </button>
+
                       {alert.status === 'New' && (
                         <button
                           onClick={() => updateAlertStatus(alert.alertId, 'Under Review')}
@@ -238,7 +339,7 @@ export const Alerts = () => {
                           onClick={() => updateAlertStatus(alert.alertId, 'Action Initiated')}
                           className="px-2 py-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded transition"
                         >
-                          Initiate Action
+                          Action
                         </button>
                       )}
                       {alert.status === 'Action Initiated' && (
@@ -264,9 +365,123 @@ export const Alerts = () => {
           </table>
         </div>
       </div>
+
+      {/* Critical Alert Email Dispatch Modal */}
+      {isEmailModalOpen && selectedProjectForEmail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-red-600 flex items-center justify-center">
+                  <Flame className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold">Dispatch Critical Alert via Gmail</h3>
+                  <span className="text-[10px] text-slate-400">Option C Hierarchy &bull; Project Head &amp; State/Central CC</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEmailModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-white rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-5 space-y-4">
+              {/* Project Brief Card with Official Emblem */}
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 mb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">🇮🇳</span>
+                    <span className="text-[11px] font-bold text-slate-700 uppercase">DRISHTI AI Alert Brief</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">
+                    CRITICAL ({(selectedProjectForEmail.overallRisk || 88.0).toFixed(1)}%)
+                  </span>
+                </div>
+
+                <h4 className="text-xs font-extrabold text-slate-900 leading-snug">
+                  {selectedProjectForEmail.projectName}
+                </h4>
+                <div className="grid grid-cols-2 gap-2 mt-2 text-[11px] text-slate-600">
+                  <div><strong>ID:</strong> #{selectedProjectForEmail.projectId}</div>
+                  <div><strong>State:</strong> {selectedProjectForEmail.state}</div>
+                  <div><strong>Ministry:</strong> {selectedProjectForEmail.ministry}</div>
+                  <div><strong>Progress:</strong> {selectedProjectForEmail.physicalProgress || 42}%</div>
+                </div>
+              </div>
+
+              {/* Recipient Input */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Recipient Email (Project Head / Manager):
+                </label>
+                <input
+                  type="email"
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  placeholder="hardgamer7000@gmail.com"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              {/* 48-72h Escalation Clause Warning */}
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-[11px] flex gap-2">
+                <Clock className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <div>
+                  <strong>72h Escalation SLA:</strong> If the Project Manager does not log mitigation within 3 days, the system will fire an automated Tier-2 Escalation to Central Ministry leadership.
+                </div>
+              </div>
+
+              {/* Status Message */}
+              {emailStatusMsg && (
+                <div className={`p-3 rounded-xl text-xs font-semibold ${
+                  emailStatusMsg.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}>
+                  {emailStatusMsg.text}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsEmailModalOpen(false)}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isSendingEmail}
+                onClick={handleSendEmailDispatch}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow transition disabled:opacity-50"
+              >
+                {isSendingEmail ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Dispatching via Gmail...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Send Critical Email Now</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageContainer>
   );
 };
 
 export default Alerts;
-
