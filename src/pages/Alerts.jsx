@@ -10,13 +10,17 @@ import {
   Filter,
   Eye,
   ExternalLink,
-  RotateCcw
+  RotateCcw,
+  Mail,
+  Check,
+  Loader2
 } from 'lucide-react';
 import PageContainer from '../components/layout/PageContainer';
 import { useDashboard } from '../context/DashboardContext';
 import { RiskBadge } from '../components/common/RiskBadge';
 import StatusBadge from '../components/common/StatusBadge';
 import { SearchBar } from '../components/common/SearchBar';
+import { api } from '../services/api';
 
 export const Alerts = () => {
   const navigate = useNavigate();
@@ -25,6 +29,11 @@ export const Alerts = () => {
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Email sending state per alert ID
+  const [sendingAlertId, setSendingAlertId] = useState(null);
+  const [sentAlertIds, setSentAlertIds] = useState({});
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Counts
   const criticalCount = alerts.filter((a) => a.severity === 'CRITICAL').length;
@@ -49,12 +58,54 @@ export const Alerts = () => {
     });
   }, [alerts, severityFilter, statusFilter, searchQuery]);
 
+  // Fast direct 1-2 second email dispatch handler
+  const handleQuickEmailDispatch = async (alert) => {
+    setSendingAlertId(alert.alertId);
+    try {
+      await api.dispatchCriticalAlert(
+        alert.projectId || '701410',
+        'hardgamer7000@gmail.com',
+        alert.reason || 'Critical risk milestone deviation.'
+      );
+      setSentAlertIds((prev) => ({ ...prev, [alert.alertId]: true }));
+      setToastMessage({
+        type: 'success',
+        text: `🚨 Critical Alert for #${alert.projectId} dispatched to hardgamer7000@gmail.com!`
+      });
+      setTimeout(() => {
+        setToastMessage(null);
+      }, 3500);
+    } catch (err) {
+      setToastMessage({
+        type: 'error',
+        text: `Failed to dispatch alert: ${err.message}`
+      });
+      setTimeout(() => setToastMessage(null), 3500);
+    } finally {
+      setSendingAlertId(null);
+    }
+  };
+
   return (
     <PageContainer
       breadcrumbs={[{ label: 'Early Warnings' }]}
       title="Early Warning & Anomaly Detection Radar"
       subtitle="Automated predictive incident detection and inter-ministerial resolution dispatch."
     >
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-20 right-6 z-50 animate-in slide-in-from-top-3 duration-200">
+          <div className={`px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold border ${
+            toastMessage.type === 'success'
+              ? 'bg-slate-900 text-white border-emerald-500'
+              : 'bg-red-600 text-white border-red-700'
+          }`}>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>{toastMessage.text}</span>
+          </div>
+        </div>
+      )}
+
       {/* Top 5 Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-card">
@@ -168,98 +219,132 @@ export const Alerts = () => {
                 <th className="py-3 px-3">Risk Type</th>
                 <th className="py-3 px-3 text-right">Probability</th>
                 <th className="py-3 px-3 text-center">Severity</th>
-                <th className="py-3 px-3 min-w-[240px]">Reason & AI Recommendation</th>
+                <th className="py-3 px-3 min-w-[220px]">Reason & AI Recommendation</th>
                 <th className="py-3 px-3 hidden lg:table-cell">Created</th>
                 <th className="py-3 px-3 text-center">Status</th>
-                <th className="py-3 px-3.5 text-center">Action</th>
+                <th className="py-3 px-3.5 text-center min-w-[170px]">Direct Action</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-100 font-medium">
-              {filteredAlerts.map((alert) => (
-                <tr key={alert.alertId} className="hover:bg-slate-50 transition">
-                  <td className="py-3 px-3.5 font-mono font-bold text-gov-800">
-                    {alert.alertId}
-                  </td>
+              {filteredAlerts.map((alert) => {
+                const isSending = sendingAlertId === alert.alertId;
+                const isSent = sentAlertIds[alert.alertId];
 
-                  <td className="py-3 px-3">
-                    <button
-                      onClick={() => navigate(`/projects/${alert.projectId}`)}
-                      className="font-bold text-slate-900 hover:text-gov-700 text-left line-clamp-1 block"
-                    >
-                      {alert.projectName}
-                    </button>
-                    <span className="text-[10px] text-slate-400">
-                      {alert.ministry} • {alert.state}
-                    </span>
-                  </td>
+                return (
+                  <tr key={alert.alertId} className="hover:bg-slate-50 transition">
+                    <td className="py-3 px-3.5 font-mono font-bold text-gov-800">
+                      {alert.alertId}
+                    </td>
 
-                  <td className="py-3 px-3 font-semibold text-slate-800">
-                    {alert.riskType}
-                  </td>
-
-                  <td className="py-3 px-3 text-right font-mono font-bold text-red-600">
-                    {alert.probability}%
-                  </td>
-
-                  <td className="py-3 px-3 text-center">
-                    <RiskBadge level={alert.severity} size="xs" />
-                  </td>
-
-                  <td className="py-3 px-3">
-                    <p className="text-slate-700 line-clamp-2 text-[11px]">{alert.reason}</p>
-                    {alert.recommendation && (
-                      <span className="text-[10px] text-gov-800 font-semibold block mt-0.5">
-                        Rec: {alert.recommendation}
-                      </span>
-                    )}
-                  </td>
-
-                  <td className="py-3 px-3 hidden lg:table-cell text-[11px] text-slate-500 whitespace-nowrap">
-                    {alert.created}
-                  </td>
-
-                  <td className="py-3 px-3 text-center whitespace-nowrap">
-                    <StatusBadge status={alert.status} />
-                  </td>
-
-                  <td className="py-3 px-3.5 text-center whitespace-nowrap">
-                    <div className="flex items-center justify-center gap-1.5">
-                      {alert.status === 'New' && (
-                        <button
-                          onClick={() => updateAlertStatus(alert.alertId, 'Under Review')}
-                          className="px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 rounded transition"
-                        >
-                          Review
-                        </button>
-                      )}
-                      {alert.status === 'Under Review' && (
-                        <button
-                          onClick={() => updateAlertStatus(alert.alertId, 'Action Initiated')}
-                          className="px-2 py-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded transition"
-                        >
-                          Initiate Action
-                        </button>
-                      )}
-                      {alert.status === 'Action Initiated' && (
-                        <button
-                          onClick={() => updateAlertStatus(alert.alertId, 'Resolved')}
-                          className="px-2 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition"
-                        >
-                          Resolve
-                        </button>
-                      )}
+                    <td className="py-3 px-3">
                       <button
                         onClick={() => navigate(`/projects/${alert.projectId}`)}
-                        className="p-1 text-slate-400 hover:text-gov-700 hover:bg-slate-100 rounded transition"
-                        title="View Project Details"
+                        className="font-bold text-slate-900 hover:text-gov-700 text-left line-clamp-1 block"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        {alert.projectName}
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      <span className="text-[10px] text-slate-400">
+                        {alert.ministry} • {alert.state}
+                      </span>
+                    </td>
+
+                    <td className="py-3 px-3 font-semibold text-slate-800">
+                      {alert.riskType}
+                    </td>
+
+                    <td className="py-3 px-3 text-right font-mono font-bold text-red-600">
+                      {alert.probability}%
+                    </td>
+
+                    <td className="py-3 px-3 text-center">
+                      <RiskBadge level={alert.severity} size="xs" />
+                    </td>
+
+                    <td className="py-3 px-3">
+                      <p className="text-slate-700 line-clamp-2 text-[11px]">{alert.reason}</p>
+                      {alert.recommendation && (
+                        <span className="text-[10px] text-gov-800 font-semibold block mt-0.5">
+                          Rec: {alert.recommendation}
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="py-3 px-3 hidden lg:table-cell text-[11px] text-slate-500 whitespace-nowrap">
+                      {alert.created}
+                    </td>
+
+                    <td className="py-3 px-3 text-center whitespace-nowrap">
+                      <StatusBadge status={alert.status} />
+                    </td>
+
+                    <td className="py-3 px-3.5 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1.5">
+                        {/* Direct Email PM Action Button */}
+                        <button
+                          disabled={isSending}
+                          onClick={() => handleQuickEmailDispatch(alert)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded transition shadow-sm ${
+                            isSent
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                              : 'bg-red-50 hover:bg-red-100 text-red-700 border border-red-200'
+                          }`}
+                          title="Direct Dispatch Critical Brief to hardgamer7000@gmail.com"
+                        >
+                          {isSending ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin text-red-600" />
+                              <span>Sending...</span>
+                            </>
+                          ) : isSent ? (
+                            <>
+                              <Check className="w-3 h-3 text-emerald-600" />
+                              <span>Email Sent</span>
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="w-3 h-3 text-red-600" />
+                              <span>Email PM</span>
+                            </>
+                          )}
+                        </button>
+
+                        {alert.status === 'New' && (
+                          <button
+                            onClick={() => updateAlertStatus(alert.alertId, 'Under Review')}
+                            className="px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 rounded transition"
+                          >
+                            Review
+                          </button>
+                        )}
+                        {alert.status === 'Under Review' && (
+                          <button
+                            onClick={() => updateAlertStatus(alert.alertId, 'Action Initiated')}
+                            className="px-2 py-1 text-[11px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded transition"
+                          >
+                            Action
+                          </button>
+                        )}
+                        {alert.status === 'Action Initiated' && (
+                          <button
+                            onClick={() => updateAlertStatus(alert.alertId, 'Resolved')}
+                            className="px-2 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition"
+                          >
+                            Resolve
+                          </button>
+                        )}
+                        <button
+                          onClick={() => navigate(`/projects/${alert.projectId}`)}
+                          className="p-1 text-slate-400 hover:text-gov-700 hover:bg-slate-100 rounded transition"
+                          title="View Project Details"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
