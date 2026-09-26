@@ -4,6 +4,7 @@ import { useDashboard } from '../../context/DashboardContext';
 import { useAuth } from '../../context/AuthContext';
 import { SearchBar } from '../common/SearchBar';
 import { FilterDropdown } from '../common/FilterDropdown';
+import { ALL_INDIAN_STATES } from '../common/StateSelectDropdown';
 
 export const ProjectFilters = ({ showCount = true, resultsCount = 0 }) => {
   const {
@@ -60,27 +61,10 @@ export const ProjectFilters = ({ showCount = true, resultsCount = 0 }) => {
     { value: 'Civil Aviation', label: 'Civil Aviation' },
   ];
 
-  const stateOptions = isStateAuthority && assignedState
-    ? [{ value: assignedState, label: `${assignedState} (Jurisdiction)` }]
-    : [
-        { value: 'ALL', label: 'All States' },
-        { value: 'Maharashtra', label: 'Maharashtra' },
-        { value: 'Punjab', label: 'Punjab' },
-        { value: 'West Bengal', label: 'West Bengal' },
-        { value: 'Haryana', label: 'Haryana' },
-        { value: 'Uttar Pradesh', label: 'Uttar Pradesh' },
-        { value: 'Bihar', label: 'Bihar' },
-        { value: 'Rajasthan', label: 'Rajasthan' },
-        { value: 'Gujarat', label: 'Gujarat' },
-        { value: 'Odisha', label: 'Odisha' },
-        { value: 'Tamil Nadu', label: 'Tamil Nadu' },
-        { value: 'Karnataka', label: 'Karnataka' },
-        { value: 'Andhra Pradesh', label: 'Andhra Pradesh' },
-        { value: 'Assam', label: 'Assam' },
-        { value: 'Madhya Pradesh', label: 'Madhya Pradesh' },
-        { value: 'Kerala', label: 'Kerala' },
-        { value: 'Telangana', label: 'Telangana' },
-      ];
+  const stateOptions = [
+    { value: 'ALL', label: 'All States' },
+    ...ALL_INDIAN_STATES.map((s) => ({ value: s, label: s }))
+  ];
 
   const effectiveMinistryOptions = useMemo(() => {
     if (selectedMinistryFilter !== 'ALL' && !ministryOptions.some(o => o.value.toLowerCase() === selectedMinistryFilter.toLowerCase())) {

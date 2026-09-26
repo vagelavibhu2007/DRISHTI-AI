@@ -1,4 +1,6 @@
 import os
+from typing import Union, List
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,12 +48,23 @@ class Settings(BaseSettings):
     CATEGORICAL_FEATURES: list[str] = ["Ministry", "Sector", "State"]
     ALL_FEATURES: list[str] = NUMERIC_FEATURES + CATEGORICAL_FEATURES
 
-    CORS_ORIGINS: list[str] = [
-        origin.strip() for origin in os.getenv(
-            "CORS_ORIGINS",
-            "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000,https://drishti-ai-ruby.vercel.app"
-        ).split(",") if origin.strip()
+    CORS_ORIGINS: Union[List[str], str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "https://drishti-ai-ruby.vercel.app"
     ]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return v
+
     CORS_ORIGIN_REGEX: str = os.getenv("CORS_ORIGIN_REGEX", r"^https:\/\/.*\.vercel\.app$|^https:\/\/.*\.onrender\.com$|^https:\/\/.*\.railway\.app$")
 
     # Environment mode: 'development', 'staging', 'production'

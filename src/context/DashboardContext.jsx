@@ -15,20 +15,17 @@ const DashboardContext = createContext();
 export const DashboardProvider = ({ children }) => {
   const { user, isCentralAuthority, isStateAuthority, assignedState, isHighestRankCentralAuthority } = useAuth();
 
-  // Global Filters
+  // Global Filters - Default state filter is always 'ALL' across all roles
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRiskFilter, setSelectedRiskFilter] = useState('ALL');
   const [selectedMinistryFilter, setSelectedMinistryFilter] = useState('ALL');
   const [selectedSectorFilter, setSelectedSectorFilter] = useState('ALL');
-  const [selectedStateFilter, setSelectedStateFilter] = useState(() => {
-    return isStateAuthority && assignedState ? assignedState : 'ALL';
-  });
+  const [selectedStateFilter, setSelectedStateFilter] = useState('ALL');
 
   // Active State Metrics for Dashboard
   const activeStateMetrics = useMemo(() => {
-    const effectiveState = isStateAuthority && assignedState ? assignedState : selectedStateFilter;
-    return getStateDashboardMetrics(effectiveState);
-  }, [isStateAuthority, assignedState, selectedStateFilter]);
+    return getStateDashboardMetrics(selectedStateFilter);
+  }, [selectedStateFilter]);
 
   // Application Data State
   const [stats, setStats] = useState(() => activeStateMetrics);
@@ -37,14 +34,10 @@ export const DashboardProvider = ({ children }) => {
   const [modelInfo, setModelInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Sync state filter when user authority changes
+  // When any user logs in or authenticates, always default selected state to ALL
   useEffect(() => {
-    if (isStateAuthority && assignedState) {
-      setSelectedStateFilter(assignedState);
-    } else if (!isStateAuthority) {
-      setSelectedStateFilter((prev) => (prev === assignedState ? 'ALL' : prev));
-    }
-  }, [isStateAuthority, assignedState]);
+    setSelectedStateFilter('ALL');
+  }, [user]);
 
   // Sync stats whenever activeStateMetrics changes
   useEffect(() => {
@@ -158,7 +151,7 @@ export const DashboardProvider = ({ children }) => {
     setSelectedRiskFilter('ALL');
     setSelectedMinistryFilter('ALL');
     setSelectedSectorFilter('ALL');
-    setSelectedStateFilter(isStateAuthority && assignedState ? assignedState : 'ALL');
+    setSelectedStateFilter('ALL');
   };
 
   const updateAlertStatus = (alertId, newStatus) => {

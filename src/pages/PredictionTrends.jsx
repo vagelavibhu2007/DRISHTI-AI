@@ -20,6 +20,7 @@ import { RISK_TREND_12M, SECTOR_RISK_DATA } from '../data/mockData';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { STANDARDIZED_STATES } from '../utils/riskUtils';
+import { StateSelectDropdown } from '../components/common/StateSelectDropdown';
 
 export const PredictionTrends = () => {
   const { user, role, isCentralAuthority, isStateAuthority, assignedState } = useAuth();
@@ -167,21 +168,12 @@ export const PredictionTrends = () => {
             ))}
           </div>
 
-          {/* State Filter Dropdown - Only available in Central Authority */}
-          {isCentral && (
-            <select
-              value={selectedState}
-              onChange={(e) => setSelectedState(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-gov-700/20"
-            >
-              <option value="ALL">All States</option>
-              {sortedStates.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
-          )}
+          {/* State Filter Dropdown */}
+          <StateSelectDropdown
+            value={selectedState}
+            onChange={(val) => setSelectedState(val)}
+            allLabel="All States"
+          />
 
           <select
             value={selectedSector}
