@@ -28,7 +28,8 @@ from backend.routers import (
     model_info,
     alerts,
     auth,
-    civilian
+    civilian,
+    civilian_admin
 )
 
 logging.basicConfig(
@@ -77,6 +78,7 @@ app.include_router(explain.router, prefix=settings.API_PREFIX)
 app.include_router(model_info.router, prefix=settings.API_PREFIX)
 app.include_router(alerts.router, prefix=settings.API_PREFIX)
 app.include_router(civilian.router, prefix=settings.API_PREFIX)
+app.include_router(civilian_admin.router, prefix=settings.API_PREFIX)
 
 @app.get("/", tags=["System"])
 def root():

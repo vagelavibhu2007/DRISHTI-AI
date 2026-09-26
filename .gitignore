@@ -11,6 +11,7 @@ __pycache__/
 .env
 .env.local
 *.log
+*.db
 backend/data/*.db
 uploads/id_proofs/*
 !uploads/id_proofs/.gitkeep
