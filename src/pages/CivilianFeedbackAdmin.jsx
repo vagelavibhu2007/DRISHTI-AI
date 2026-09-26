@@ -54,8 +54,6 @@ export const CivilianFeedbackAdmin = () => {
   const [selectedType, setSelectedType] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [selectedState, setSelectedState] = useState('ALL');
-  const [selectedDistrict, setSelectedDistrict] = useState('ALL');
-  const [selectedProject, setSelectedProject] = useState('ALL');
 
   // Load Data
   const loadData = useCallback(async () => {
@@ -89,19 +87,13 @@ export const CivilianFeedbackAdmin = () => {
   // Derived filter options
   const filterOptions = useMemo(() => {
     const states = new Set();
-    const districts = new Set();
-    const projects = new Set();
 
     items.forEach(item => {
       if (item.state) states.add(item.state);
-      if (item.district) districts.add(item.district);
-      if (item.project_name) projects.add(item.project_name);
     });
 
     return {
-      states: Array.from(states).sort(),
-      districts: Array.from(districts).sort(),
-      projects: Array.from(projects).sort()
+      states: Array.from(states).sort()
     };
   }, [items]);
 
@@ -120,8 +112,6 @@ export const CivilianFeedbackAdmin = () => {
       }
 
       if (selectedState !== 'ALL' && item.state !== selectedState) return false;
-      if (selectedDistrict !== 'ALL' && item.district !== selectedDistrict) return false;
-      if (selectedProject !== 'ALL' && item.project_name !== selectedProject) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -144,7 +134,7 @@ export const CivilianFeedbackAdmin = () => {
 
       return true;
     });
-  }, [items, selectedType, selectedStatus, selectedState, selectedDistrict, selectedProject, searchQuery]);
+  }, [items, selectedType, selectedStatus, selectedState, searchQuery]);
 
   const handleUpdateStatus = async (newStatus) => {
     if (!selectedItem) return;
@@ -318,7 +308,7 @@ export const CivilianFeedbackAdmin = () => {
         </div>
 
         {/* Dropdown Filters */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Status</label>
             <select
@@ -338,43 +328,12 @@ export const CivilianFeedbackAdmin = () => {
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">State</label>
             <select
               value={selectedState}
-              onChange={(e) => {
-                setSelectedState(e.target.value);
-                setSelectedDistrict('ALL');
-              }}
+              onChange={(e) => setSelectedState(e.target.value)}
               className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 focus:ring-2 focus:ring-gov-600"
             >
               <option value="ALL">All States</option>
               {filterOptions.states.map(s => (
                 <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">District</label>
-            <select
-              value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
-              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 focus:ring-2 focus:ring-gov-600"
-            >
-              <option value="ALL">All Districts</option>
-              {filterOptions.districts.map(d => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Project</label>
-            <select
-              value={selectedProject}
-              onChange={(e) => setSelectedProject(e.target.value)}
-              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white text-slate-700 focus:ring-2 focus:ring-gov-600 truncate"
-            >
-              <option value="ALL">All Projects</option>
-              {filterOptions.projects.map(p => (
-                <option key={p} value={p}>{p}</option>
               ))}
             </select>
           </div>
