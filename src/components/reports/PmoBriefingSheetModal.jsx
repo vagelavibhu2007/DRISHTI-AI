@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Printer,
@@ -128,12 +129,12 @@ TARGET REVIEW: ${brief.targetAudience}
     exportPmoBriefToCSV(currentProject, `PMO_Dossier_${brief.projectId}_${new Date().toISOString().slice(0,10)}.csv`);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="bg-slate-50 rounded-2xl shadow-2xl border border-slate-700 max-w-5xl w-full max-h-[94vh] flex flex-col overflow-hidden my-auto animate-scale-in">
+  const modalContent = (
+    <div className="fixed inset-x-0 top-16 bottom-0 z-20 flex flex-col items-center justify-start p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in overflow-y-auto">
+      <div className="bg-slate-50 rounded-2xl shadow-2xl border border-slate-700 max-w-5xl w-full max-h-[calc(100vh-5.5rem)] flex flex-col overflow-hidden animate-scale-in">
         
         {/* Top Floating Control Bar (Hidden during PDF print) */}
-        <div className="px-6 py-3.5 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 print:hidden select-none">
+        <div className="px-6 py-4 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 print:hidden select-none flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center font-black text-xs shadow-md shadow-amber-500/20">
               🇮🇳
@@ -216,7 +217,7 @@ TARGET REVIEW: ${brief.targetAudience}
         </div>
 
         {/* Scrollable Dossier Viewport */}
-        <div className="p-4 sm:p-8 overflow-y-auto bg-slate-100 flex-1 print:p-0 print:bg-white print:overflow-visible">
+        <div className="p-4 sm:p-8 overflow-y-auto bg-slate-100 flex-1 min-h-0 print:p-0 print:bg-white print:overflow-visible">
           
           {/* ========================================================================= */}
           {/* THE OFFICIAL PMO EXECUTIVE INTELLIGENCE DOSSIER (A4 OPTIMIZED DOCUMENT) */}
@@ -591,7 +592,7 @@ TARGET REVIEW: ${brief.targetAudience}
         </div>
 
         {/* Modal Bottom Action Controls (Hidden during print) */}
-        <div className="px-6 py-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 print:hidden shadow-inner">
+        <div className="px-6 py-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 print:hidden shadow-inner flex-shrink-0">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Ready for formal inter-ministerial PDF dossier generation & CSV distribution.</span>
@@ -624,6 +625,8 @@ TARGET REVIEW: ${brief.targetAudience}
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };
 
 export default PmoBriefingSheetModal;
