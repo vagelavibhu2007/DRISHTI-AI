@@ -126,7 +126,7 @@ def dispatch_critical_project_alert(req: CriticalAlertDispatchRequest):
     html_content = build_critical_project_email_html(project, recipient_role="Project Director & State Authority")
     
     # CC Central Admin & State Authority (Option C)
-    cc_list = [settings.INITIAL_ADMIN_EMAIL or "bob.patel@example.com"]
+    cc_list = [settings.INITIAL_ADMIN_EMAIL or "vagelavibhu2007@gmail.com"]
 
     result = send_email_async(
         to_email=recipient,

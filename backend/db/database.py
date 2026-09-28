@@ -93,22 +93,22 @@ def init_db():
     # 2. Idempotent seed provisioning (never overwrites existing users)
     db = SessionLocal()
     try:
-        # Check Central Authority admin (Bob Patel)
-        admin_uname = settings.INITIAL_ADMIN_USERNAME or 'bob.patel'
+        # Check Central Authority admin
+        admin_uname = settings.INITIAL_ADMIN_USERNAME or 'vibhu'
         existing_admin = db.query(User).filter(User.username == admin_uname).first()
         if not existing_admin:
-            admin_pwd = settings.INITIAL_ADMIN_PASSWORD or 'BobPatel@127'
-            admin_email = settings.INITIAL_ADMIN_EMAIL or 'bob.patel@example.com'
+            admin_pwd = settings.INITIAL_ADMIN_PASSWORD or 'Vibhu@127'
+            admin_email = settings.INITIAL_ADMIN_EMAIL or 'vagelavibhu2007@gmail.com'
             new_admin = User(
-                first_name='Bob',
-                last_name='Patel',
-                mobile_number='+91 90000 00000',
+                first_name='Vibhu',
+                last_name='Vagela',
+                mobile_number='9876543210',
                 email=admin_email,
                 authority_type='CENTRAL_AUTHORITY',
                 state=None,
                 position='Chief Project Officer (Central)',
-                id_proof_type='Aadhaar Card',
-                id_proof_number='XXXX-XXXX-0000',
+                id_proof_type='Government ID',
+                id_proof_number='123456789012',
                 id_proof_file_path='uploads/id_proofs/default_central.pdf',
                 profile_photo_path=None,
                 username=admin_uname,
@@ -116,8 +116,7 @@ def init_db():
                 is_active=True
             )
             db.add(new_admin)
-            db.commit()
-            logger.info("Initial Central Authority administrator provisioned for Bob Patel.")
+            logger.info("Initial Central Authority administrator provisioned.")
 
         # Check State Authority officer (Gujarat demo)
         existing_state_officer = db.query(User).filter(User.username == 'priya_patel').first()
