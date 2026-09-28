@@ -3,16 +3,17 @@ import { MOCK_PROJECTS, DASHBOARD_STATS, EARLY_WARNING_ALERTS } from '../data/mo
 import { isProjectInState } from '../utils/riskUtils';
 
 const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:8000/api';
+    }
+  }
   const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
   if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
     const clean = envUrl.trim().replace(/\/+$/, '');
     return clean.endsWith('/api') ? clean : `${clean}/api`;
   }
   if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:8000/api';
-    }
-    // In browser on deployed host (e.g. Vercel), use relative '/api' so Vercel rewrites proxy all requests seamlessly
     return '/api';
   }
   return 'https://drishti-ai-r9gq.onrender.com/api';

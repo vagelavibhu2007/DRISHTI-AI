@@ -156,7 +156,7 @@ export const AuthProvider = ({ children }) => {
     ];
 
     const matchesKeyword = highestRankKeywords.some(kw => pos.includes(kw));
-    const matchesKnownAdmin = ['vibhu', 'aarav_sharma', 'cpo'].includes(username) || email.startsWith('vibhu');
+    const matchesKnownAdmin = ['bob.patel', 'aarav_sharma', 'cpo'].includes(username) || email.startsWith('bob.patel');
 
     return matchesKeyword || matchesKnownAdmin;
   }, [user, isCentralAuthority, isStateAuthority]);

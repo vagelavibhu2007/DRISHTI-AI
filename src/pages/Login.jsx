@@ -140,7 +140,7 @@ export const Login = () => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. vibhu or priya_patel"
+                  placeholder="e.g. bob.patel or priya_patel"
                   className="w-full pl-9 pr-3.5 py-2 bg-slate-950 border border-slate-700 hover:border-slate-600 focus:border-gov-500 rounded-lg text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-gov-500 transition font-sans"
                 />
               </div>
@@ -213,11 +213,11 @@ export const Login = () => {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => fillQuickDemo('vibhu', 'Vibhu@127')}
+                onClick={() => fillQuickDemo('bob.patel', 'BobPatel@127')}
                 className="p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-left transition"
               >
                 <div className="font-bold text-sky-400 text-xs truncate">Central Authority</div>
-                <div className="text-[11px] text-slate-400 font-mono mt-0.5">vibhu</div>
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">bob.patel</div>
               </button>
               <button
                 type="button"
