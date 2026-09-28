@@ -93,22 +93,36 @@ def init_db():
     # 2. Idempotent seed provisioning (never overwrites existing users)
     db = SessionLocal()
     try:
-        # Check Central Authority admin
-        admin_uname = settings.INITIAL_ADMIN_USERNAME or 'vibhu'
-        existing_admin = db.query(User).filter(User.username == admin_uname).first()
-        if not existing_admin:
-            admin_pwd = settings.INITIAL_ADMIN_PASSWORD or 'Vibhu@127'
-            admin_email = settings.INITIAL_ADMIN_EMAIL or 'vagelavibhu2007@gmail.com'
+        # Check Central Authority admin (Bob Patel)
+        admin_uname = settings.INITIAL_ADMIN_USERNAME or 'bob.patel'
+        admin_pwd = settings.INITIAL_ADMIN_PASSWORD or 'BobPatel@127'
+        admin_email = settings.INITIAL_ADMIN_EMAIL or 'bob.patel@example.com'
+
+        existing_admin = db.query(User).filter((User.username == admin_uname) | (User.username == 'vibhu')).first()
+        if existing_admin:
+            existing_admin.username = admin_uname
+            existing_admin.first_name = 'Bob'
+            existing_admin.last_name = 'Patel'
+            existing_admin.email = admin_email
+            existing_admin.mobile_number = '+91 90000 00000'
+            existing_admin.id_proof_type = 'Aadhaar Card'
+            existing_admin.id_proof_number = 'XXXX-XXXX-0000'
+            existing_admin.position = 'Chief Project Officer (Central)'
+            existing_admin.password_hash = hash_password(admin_pwd)
+            existing_admin.is_active = True
+            db.commit()
+            logger.info("Central Authority administrator updated to Bob Patel.")
+        else:
             new_admin = User(
-                first_name='Vibhu',
-                last_name='Vagela',
-                mobile_number='9876543210',
+                first_name='Bob',
+                last_name='Patel',
+                mobile_number='+91 90000 00000',
                 email=admin_email,
                 authority_type='CENTRAL_AUTHORITY',
                 state=None,
                 position='Chief Project Officer (Central)',
-                id_proof_type='Government ID',
-                id_proof_number='123456789012',
+                id_proof_type='Aadhaar Card',
+                id_proof_number='XXXX-XXXX-0000',
                 id_proof_file_path='uploads/id_proofs/default_central.pdf',
                 profile_photo_path=None,
                 username=admin_uname,
@@ -116,7 +130,8 @@ def init_db():
                 is_active=True
             )
             db.add(new_admin)
-            logger.info("Initial Central Authority administrator provisioned.")
+            db.commit()
+            logger.info("Initial Central Authority administrator provisioned for Bob Patel.")
 
         # Check State Authority officer (Gujarat demo)
         existing_state_officer = db.query(User).filter(User.username == 'priya_patel').first()
