@@ -168,12 +168,14 @@ export const PredictionTrends = () => {
             ))}
           </div>
 
-          {/* State Filter Dropdown */}
-          <StateSelectDropdown
-            value={selectedState}
-            onChange={(val) => setSelectedState(val)}
-            allLabel="All States"
-          />
+          {/* State Filter Dropdown - Central Authority Only */}
+          {isCentral && (
+            <StateSelectDropdown
+              value={selectedState}
+              onChange={(val) => setSelectedState(val)}
+              allLabel="All States"
+            />
+          )}
 
           <select
             value={selectedSector}

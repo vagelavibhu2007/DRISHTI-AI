@@ -52,13 +52,15 @@ export const Dashboard = () => {
       subtitle="AI-powered infrastructure project risk monitoring and early warning."
       action={
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-          {/* State Filter Dropdown with All 36 States & UTs and Scroll */}
-          <StateSelectDropdown
-            value={selectedStateFilter}
-            onChange={(val) => setSelectedStateFilter(val)}
-            allLabel="All States"
-            align="right"
-          />
+          {/* State Filter Dropdown with All 36 States & UTs and Scroll - Visible only in Central Authority */}
+          {isCentralUser && (
+            <StateSelectDropdown
+              value={selectedStateFilter}
+              onChange={(val) => setSelectedStateFilter(val)}
+              allLabel="All States"
+              align="right"
+            />
+          )}
 
           <button
             onClick={() => setIsPredictionModalOpen(true)}
